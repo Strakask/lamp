@@ -253,12 +253,12 @@ sed -i "s@^<Directory \"/usr/local/apache/htdocs\">@<Directory \"$home_dir\">@" 
 mkdir /usr/local/apache/conf/vhost
 cat > /usr/local/apache/conf/vhost/admin.conf << EOF
 <VirtualHost *:80>
-    ServerAdmin webmaster@$domain
-    DocumentRoot \"$home_dir\"
+    ServerAdmin admin@linuxeye.com
+    DocumentRoot "$home_dir"
     ServerName $IP
     ErrorLog "logs/admin-error.log"
     CustomLog "logs/admin-access.log" common
-<Directory \"$home_dir\">
+<Directory "$home_dir">
       Options Indexes MultiViews
       AllowOverride None
       Order allow,deny

@@ -63,7 +63,7 @@ echo "################################"
 if [ "$access_log" == 'n' ]; then
 	al='CustomLog "/dev/null" common'
 else
-	al="CustomLog \"logs/${domain}-access.log common"
+	al=CustomLog \"logs/${domain}-access.log common\"
 	echo "################################"
 	echo You access log file="/usr/local/apache/logs/${domain}-access.log"
 	echo "################################"
@@ -80,12 +80,12 @@ chown -R www.www $vhostdir
 cat >/usr/local/apache/conf/vhost/$domain.conf<<EOF
 <VirtualHost *:80>
     ServerAdmin webmaster@$domain
-    DocumentRoot \"$vhostdir\"
+    DocumentRoot "$vhostdir"
     ServerName $domain 
     $sa
     ErrorLog "logs/${domain}-error.log"
     $al
-<Directory \"$vhostdir\">
+<Directory "$vhostdir">
       Options Indexes MultiViews
       AllowOverride None
       Order allow,deny
