@@ -92,7 +92,7 @@ cd /root/lamp/source
 [ -s httpd-2.4.6.tar.gz ] && echo 'httpd-2.4.6.tar.gz found' || wget http://www.apache.org/dist/httpd/httpd-2.4.6.tar.gz 
 [ -s pure-ftpd-1.0.36.tar.gz ] && echo 'pure-ftpd-1.0.36.tar.gz found' || wget ftp://ftp.pureftpd.org/pub/pure-ftpd/releases/pure-ftpd-1.0.36.tar.gz
 [ -s ftp_v2.1.tar.gz ] && echo 'ftp_v2.1.tar.gz found' || wget http://machiel.generaal.net/files/pureftpd/ftp_v2.1.tar.gz 
-[ -s phpMyAdmin-4.0.4.1-all-languages.tar.gz ] && echo 'phpMyAdmin-4.0.4.1-all-languages.tar.gz found' || wget http://iweb.dl.sourceforge.net/project/phpmyadmin/phpMyAdmin/4.0.4.1/phpMyAdmin-4.0.4.1-all-languages.tar.gz 
+[ -s phpMyAdmin-4.0.4.2-all-languages.tar.gz ] && echo 'phpMyAdmin-4.0.4.2-all-languages.tar.gz found' || wget http://iweb.dl.sourceforge.net/project/phpmyadmin/phpMyAdmin/4.0.4.2/phpMyAdmin-4.0.4.2-all-languages.tar.gz 
 # check source packages
 for src in `cat ./lamp_install.sh | grep found.*wget | awk '{print $3}' | grep gz`
 do
@@ -489,8 +489,8 @@ rm -rf  $home_dir/ftp/install.php
 function Install_phpMyAdmin()
 { 
 cd $home_dir
-tar xzf /root/lamp/source/phpMyAdmin-4.0.4.1-all-languages.tar.gz
-mv phpMyAdmin-4.0.4.1-all-languages phpMyAdmin
+tar xzf /root/lamp/source/phpMyAdmin-4.0.4.2-all-languages.tar.gz
+mv phpMyAdmin-4.0.4.2-all-languages phpMyAdmin
 sed -i 's@localhost@127.0.0.1@' phpMyAdmin/libraries/config.default.php
 }
 
