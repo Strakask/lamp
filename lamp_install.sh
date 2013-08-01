@@ -94,10 +94,11 @@ cd /root/lamp/source
 [ -s ftp_v2.1.tar.gz ] && echo 'ftp_v2.1.tar.gz found' || wget -c http://machiel.generaal.net/files/pureftpd/ftp_v2.1.tar.gz 
 [ -s phpMyAdmin-4.0.4.2-all-languages.tar.gz ] && echo 'phpMyAdmin-4.0.4.2-all-languages.tar.gz found' || wget -c http://iweb.dl.sourceforge.net/project/phpmyadmin/phpMyAdmin/4.0.4.2/phpMyAdmin-4.0.4.2-all-languages.tar.gz 
 # check source packages
-for src in `cat ./lamp_install.sh | grep found.*wget -c | awk '{print $3}' | grep gz`
+for src in `cat ./lamp_install.sh | grep found.*wget | awk '{print $3}' | grep gz`
 do
-        if [ ! -f "/root/lamp/source/$src" ];then
-                echo -e "\033[31m$src no found! \033[0m"
+        if [ ! -e "/root/lamp/source/$src" ];then
+		echo -e "\033[31m$src no found! \033[0m"
+                echo -e "\033[31mUpdated version of the Package source,Please Contact Author! \033[0m"
                 exit 1
         fi
 done
