@@ -289,7 +289,6 @@ DeflateCompressionLevel 6
 SetOutputFilter DEFLATE
 Include conf/vhost/*.conf
 EOF
-service httpd restart
 }
 
 function Install_PHP()
@@ -502,6 +501,7 @@ phpinfo()
 cp /root/lamp/conf/index.html $home_dir
 cp /root/lamp/conf/tz.php $home_dir
 chown -R www.www $home_dir
+service httpd restart
 }
 
 function Iptables()
