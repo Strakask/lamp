@@ -399,7 +399,11 @@ make && make install
 cd ../
 
 # Modify php.ini
-sed -i 's@extension_dir = "ext"@extension_dir = "ext"\nextension_dir = "/usr/local/php/lib/php/extensions/no-debug-zts-20121212/"\nextension = "pdo_mysql.so"\nextension = "imagick.so"\nextension = "http.so"@' /usr/local/php/etc/php.ini
+if [ `getconf WORD_BIT` = '32' ] && [ `getconf LONG_BIT` = '64' ] ; then
+	sed -i 's@extension_dir = "ext"@extension_dir = "ext"\nextension_dir = "/usr/local/php/lib/php/extensions/no-debug-non-zts-20121212/"\nextension = "pdo_mysql.so"\nextension = "imagick.so"\nextension = "http.so"@' /usr/local/php/etc/php.ini
+else
+	sed -i 's@extension_dir = "ext"@extension_dir = "ext"\nextension_dir = "/usr/local/php/lib/php/extensions/no-debug-zts-20121212/"\nextension = "pdo_mysql.so"\nextension = "imagick.so"\nextension = "http.so"@' /usr/local/php/etc/php.ini
+fi
 sed -i 's@^output_buffering =@output_buffering = On\noutput_buffering =@' /usr/local/php/etc/php.ini 
 sed -i 's@^;cgi.fix_pathinfo.*@cgi.fix_pathinfo=0@' /usr/local/php/etc/php.ini 
 sed -i 's@^short_open_tag = Off@short_open_tag = On@' /usr/local/php/etc/php.ini
@@ -431,7 +435,7 @@ cd memcache-2.2.7
 /usr/local/php/bin/phpize
 ./configure --with-php-config=/usr/local/php/bin/php-config
 make && make install
-sed -i 's@"/usr/local/php/lib/php/extensions/no-debug-zts-20121212/"@"/usr/local/php/lib/php/extensions/no-debug-zts-20121212/"\nextension = "memcache.so"@' /usr/local/php/etc/php.ini
+sed -i 's@-zts-20121212/"@-zts-20121212/"\nextension = "memcache.so"@' /usr/local/php/etc/php.ini
 cd ../
 
 tar xzf memcached-1.4.15.tar.gz
