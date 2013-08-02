@@ -274,10 +274,12 @@ cat > /usr/local/apache/conf/vhost/admin.conf << EOF
     ErrorLog "logs/admin-error.log"
     CustomLog "logs/admin-access.log" common
 <Directory "$home_dir">
-      Options Indexes MultiViews
-      AllowOverride None
-      Order allow,deny
-      Allow from all
+    SetOutputFilter DEFLATE
+    Options FollowSymLinks
+    AllowOverride All
+    Order allow,deny
+    Allow from all
+    DirectoryIndex index.html index.php
 </Directory>
 </VirtualHost>
 EOF

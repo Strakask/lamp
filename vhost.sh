@@ -86,10 +86,12 @@ cat >/usr/local/apache/conf/vhost/$domain.conf<<EOF
     ErrorLog "logs/${domain}-error.log"
     $al
 <Directory "$vhostdir">
-      Options Indexes MultiViews
-      AllowOverride None
-      Order allow,deny
-      Allow from all
+    SetOutputFilter DEFLATE
+    Options FollowSymLinks
+    AllowOverride All
+    Order allow,deny
+    Allow from all
+    DirectoryIndex index.html index.php
 </Directory>
 </VirtualHost>
 EOF
