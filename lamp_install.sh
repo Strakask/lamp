@@ -553,6 +553,8 @@ Apache_conf 2>&1 | tee -a /root/lamp/lamp_install.log
 TEST 2>&1 | tee -a /root/lamp/lamp_install.log 
 
 echo "################Congratulations####################"
+echo -e "\033[32mPlease restart the server and see if the services start up fine.\033[0m"
+echo ''
 echo "The path of some dirs:"
 echo -e "Apache dir:                    \033[32m/usr/local/apache\033[0m"
 echo -e "MySQL dir:                     \033[32m/usr/local/mysql\033[0m"
