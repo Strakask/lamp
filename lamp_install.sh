@@ -16,11 +16,23 @@ home_dir=/home/wwwroot
 mkdir -p $home_dir
 mkdir -p /root/lamp/{source,conf}
 
-# check 
+#choice database
 while :
 do
-        read -p "Please input the root password of MySQL:" mysqlrootpwd
-        (( ${#mysqlrootpwd} >= 5 )) && break || echo -e "\033[31mMySQL root password least 5 characters! \033[0m"
+        read -p "Do you want to install MySQL or MariaDB ? ( MySQL / MariaDB ) " choice_DB
+        choice_db=`echo $choice_DB | tr [A-Z] [a-z]`
+        if [ "$choice_db" != 'mariadb' ] && [ "$choice_db" != 'mysql' ];then
+                echo -e "\033[31minput error! please input 'MySQL' or 'MariaDB'\033[0m"
+        else
+                break
+        fi
+done
+
+#eheck dbrootpwd
+while :
+do
+        read -p "Please input the root password of database:" dbrootpwd
+        (( ${#dbrootpwd} >= 5 )) && break || echo -e "\033[31m$choice_DB root password least 5 characters! \033[0m"
 done
 
 while :
@@ -75,6 +87,7 @@ cd conf
 cd /root/lamp/source
 [ -s cmake-2.8.11.2.tar.gz ] && echo 'cmake-2.8.11.2.tar.gz found' || wget -c http://www.cmake.org/files/v2.8/cmake-2.8.11.2.tar.gz
 [ -s mysql-5.6.13.tar.gz ] && echo 'mysql-5.6.13.tar.gz found' || wget -c http://cdn.mysql.com/Downloads/MySQL-5.6/mysql-5.6.13.tar.gz 
+[ -s mariadb-5.5.32.tar.gz ] && echo 'mariadb-5.5.32.tar.gz found' || wget -c http://ftp.osuosl.org/pub/mariadb/mariadb-5.5.32/kvm-tarbake-jaunty-x86/mariadb-5.5.32.tar.gz
 [ -s libiconv-1.14.tar.gz ] && echo 'libiconv-1.14.tar.gz found' || wget -c http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz
 [ -s libmcrypt-2.5.8.tar.gz ] && echo 'libmcrypt-2.5.8.tar.gz found' || wget -c http://iweb.dl.sourceforge.net/project/mcrypt/Libmcrypt/2.5.8/libmcrypt-2.5.8.tar.gz
 [ -s mhash-0.9.9.9.tar.gz ] && echo 'mhash-0.9.9.9.tar.gz found' || wget -c http://iweb.dl.sourceforge.net/project/mhash/mhash/0.9.9.9/mhash-0.9.9.9.tar.gz
@@ -108,41 +121,42 @@ function Install_MySQL()
 cd /root/lamp/source
 useradd -M -s /sbin/nologin mysql
 mkdir -p /data/mysql;chown mysql.mysql -R /data/mysql
-tar xzf cmake-2.8.11.2.tar.gz 
+tar xzf cmake-2.8.11.2.tar.gz
 cd cmake-2.8.11.2
 ./configure
 make &&  make install
 cd ..
 tar zxf mysql-5.6.13.tar.gz
 cd mysql-5.6.13
-cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql/ \
--DMYSQL_UNIX_ADDR=/data/mysql/mysqld.sock \
--DDEFAULT_CHARSET=utf8 \
--DDEFAULT_COLLATION=utf8_general_ci \
--DWITH_INNOBASE_STORAGE_ENGINE=1 \
--DWITH_MYISAM_STORAGE_ENGINE=1 \
--DWITH_MEMORY_STORAGE_ENGINE=1 \
--DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
--DWITH_MEMORY_STORAGE_ENGINE=1 \
--DWITH_READLINE=1 \
--DENABLED_LOCAL_INFILE=1 \
--DMYSQL_DATADIR=/data/mysql  \
+cmake . -DCMAKE_INSTALL_PREFIX=$db_install_prefix \
+-DMYSQL_UNIX_ADDR=/tmp/mysql.sock \
+-DMYSQL_DATADIR=/data/mysql \
+-DSYSCONFDIR=/etc \
 -DMYSQL_USER=mysql \
 -DMYSQL_TCP_PORT=3306 \
+-DWITH_INNOBASE_STORAGE_ENGINE=1 \
+-DWITH_PARTITION_STORAGE_ENGINE=1 \
+-DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
+-DWITH_MYISAM_STORAGE_ENGINE=1 \
+-DWITH_READLINE=1 \
+-DENABLED_LOCAL_INFILE=1 \
+-DWITH_EXTRA_CHARSETS=1 \
+-DDEFAULT_CHARSET=utf8 \
+-DDEFAULT_COLLATION=utf8_general_ci \
 -DEXTRA_CHARSETS=all \
+-DWITH_BIG_TABLES=1 \
 -DWITH_DEBUG=0
 make && make install
 
-if [ -d "/usr/local/mysql" ];then
+if [ -d "$db_install_prefix" ];then
         echo -e "\033[32mMySQL install successfully! \033[0m"
 else
         echo -e "\033[31mMySQL install failed,Please Contact Author! \033[0m"
         exit 1
 fi
 
-/bin/cp support-files/my-default.cnf /etc/my.cnf
-cp support-files/mysql.server /etc/init.d/mysqld 
-chmod 755 /etc/init.d/mysqld
+/bin/cp support-files/mysql.server /etc/init.d/mysqld
+chmod +x /etc/init.d/mysqld
 chkconfig --add mysqld
 chkconfig mysqld on
 cd ..
@@ -150,14 +164,15 @@ cd ..
 # my.cf
 cat > /etc/my.cnf << EOF
 [mysqld]
-basedir = /usr/local/mysql
+basedir = $db_install_prefix
 datadir = /data/mysql
-pid-file = /data/mysql/mysqld.pid
+pid-file=/data/mysql/mysqld.pid
 character-set-server = utf8
 collation-server = utf8_general_ci
 user = mysql
 port = 3306
 default_storage_engine = InnoDB
+innodb_file_per_table = 1
 server_id = 1
 log_bin = mysql-bin
 binlog_format = mixed
@@ -173,7 +188,6 @@ ft_min_word_len = 1
 query_cache_size = 64M
 query_cache_type = 1
 
-innodb_file_per_table = 1
 skip-external-locking
 key_buffer_size = 16M
 max_allowed_packet = 1M
@@ -182,6 +196,7 @@ sort_buffer_size = 512K
 net_buffer_length = 8K
 read_buffer_size = 256K
 read_rnd_buffer_size = 512K
+myisam_sort_buffer_size = 8M
 
 # LOG
 log_error = /data/mysql/mysql-error.log
@@ -190,28 +205,146 @@ slow_query_log
 slow_query_log_file = /data/mysql/mysql-slow.log
 
 # Oher
-explicit_defaults_for_timestamp=true
 #max_connections = 1000
 open_files_limit = 65535
-sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
 
 [client]
 port = 3306
 EOF
 
-/usr/local/mysql/scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql/ --datadir=/data/mysql
+$db_install_prefix/scripts/mysql_install_db --user=mysql --basedir=$db_install_prefix --datadir=/data/mysql
 
 chown mysql.mysql -R /data/mysql
 /sbin/service mysqld start
-export PATH=$PATH:/usr/local/mysql/bin
-echo 'export PATH=$PATH:/usr/local/mysql/bin' >> /etc/profile
+export PATH=$PATH:$db_install_prefix/bin
+echo "export PATH=\$PATH:$db_install_prefix/bin" >> /etc/profile
 source /etc/profile
 
-/usr/local/mysql/bin/mysql -e "grant all privileges on *.* to root@'127.0.0.1' identified by \"$mysqlrootpwd\" with grant option;"
-/usr/local/mysql/bin/mysql -e "grant all privileges on *.* to root@'localhost' identified by \"$mysqlrootpwd\" with grant option;"
-/usr/local/mysql/bin/mysql -uroot -p$mysqlrootpwd -e "delete from mysql.user where Password='';"
-/usr/local/mysql/bin/mysql -uroot -p$mysqlrootpwd -e "delete from mysql.db where User='';"
-/usr/local/mysql/bin/mysql -uroot -p$mysqlrootpwd -e "drop database test;"
+$db_install_prefix/bin/mysql -e "grant all privileges on *.* to root@'127.0.0.1' identified by \"$dbrootpwd\" with grant o
+ption;"
+$db_install_prefix/bin/mysql -e "grant all privileges on *.* to root@'localhost' identified by \"$dbrootpwd\" with grant o
+ption;"
+$db_install_prefix/bin/mysql -uroot -p$dbrootpwd -e "delete from mysql.user where Password='';"
+$db_install_prefix/bin/mysql -uroot -p$dbrootpwd -e "delete from mysql.db where User='';"
+$db_install_prefix/bin/mysql -uroot -p$dbrootpwd -e "drop database test;"
+$db_install_prefix/bin/mysql -uroot -p$dbrootpwd -e "reset master;"
+/sbin/service mysqld restart
+}
+
+function Install_MariaDB()
+{
+cd /root/lamp/source
+useradd -M -s /sbin/nologin mysql
+mkdir -p /data/mariadb;chown mysql.mysql -R /data/mariadb
+tar xzf cmake-2.8.11.2.tar.gz
+cd cmake-2.8.11.2
+./configure
+make &&  make install
+cd ..
+tar zxf mariadb-5.5.32.tar.gz
+cd mariadb-5.5.32
+cmake . -DCMAKE_INSTALL_PREFIX=$db_install_prefix \
+-DMYSQL_UNIX_ADDR=/tmp/mysql.sock \
+-DMYSQL_DATADIR=/data/mariadb \
+-DSYSCONFDIR=/etc \
+-DMYSQL_USER=mysql \
+-DMYSQL_TCP_PORT=3306 \
+-DWITH_XTRADB_STORAGE_ENGINE=1 \
+-DWITH_INNOBASE_STORAGE_ENGINE=1 \
+-DWITH_PARTITION_STORAGE_ENGINE=1 \
+-DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
+-DWITH_MYISAM_STORAGE_ENGINE=1 \
+-DWITH_READLINE=1 \
+-DENABLED_LOCAL_INFILE=1 \
+-DWITH_EXTRA_CHARSETS=1 \
+-DDEFAULT_CHARSET=utf8 \
+-DDEFAULT_COLLATION=utf8_general_ci \
+-DEXTRA_CHARSETS=all \
+-DWITH_BIG_TABLES=1 \
+-DWITH_DEBUG=0
+make && make install
+
+if [ -d "$db_install_prefix" ];then
+        echo -e "\033[32mMariaDB install successfully! \033[0m"
+else
+        echo -e "\033[31mMariaDB install failed,Please Contact Author! \033[0m"
+        exit 1
+fi
+
+/bin/cp support-files/my-small.cnf /etc/my.cnf
+/bin/cp support-files/mysql.server /etc/init.d/mysqld
+chmod +x /etc/init.d/mysqld
+chkconfig --add mysqld
+chkconfig mysqld on
+cd ..
+
+# my.cf
+cat > /etc/my.cnf << EOF
+[mysqld]
+basedir = $db_install_prefix
+datadir = /data/mariadb
+pid-file=/data/mariadb/mariadb.pid
+character-set-server = utf8
+collation-server = utf8_general_ci
+user = mysql
+port = 3306
+default_storage_engine = InnoDB
+innodb_file_per_table = 1
+server_id = 1
+log_bin = mysql-bin
+binlog_format = mixed
+expire_logs_days = 7
+bind-address = 0.0.0.0
+
+# name-resolve
+skip-name-resolve
+skip-host-cache
+
+#lower_case_table_names = 1
+ft_min_word_len = 1
+query_cache_size = 64M
+query_cache_type = 1
+
+skip-external-locking
+key_buffer_size = 16M
+max_allowed_packet = 1M
+table_open_cache = 64
+sort_buffer_size = 512K
+net_buffer_length = 8K
+read_buffer_size = 256K
+read_rnd_buffer_size = 512K
+myisam_sort_buffer_size = 8M
+
+# LOG
+log_error = /data/mariadb/mariadb-error.log
+long_query_time = 1
+slow_query_log
+slow_query_log_file = /data/mariadb/mariadb-slow.log
+
+# Oher
+#max_connections = 1000
+open_files_limit = 65535
+
+[client]
+port = 3306
+EOF
+
+$db_install_prefix/scripts/mysql_install_db --user=mysql --basedir=$db_install_prefix --datadir=/data/mariadb
+
+chown mysql.mysql -R /data/mariadb
+/sbin/service mysqld start
+export PATH=$PATH:$db_install_prefix/bin
+echo "export PATH=\$PATH:$db_install_prefix/bin" >> /etc/profile
+source /etc/profile
+
+$db_install_prefix/bin/mysql -e "grant all privileges on *.* to root@'127.0.0.1' identified by \"$dbrootpwd\" with grant o
+ption;"
+$db_install_prefix/bin/mysql -e "grant all privileges on *.* to root@'localhost' identified by \"$dbrootpwd\" with grant o
+ption;"
+$db_install_prefix/bin/mysql -uroot -p$dbrootpwd -e "delete from mysql.user where Password='';"
+$db_install_prefix/bin/mysql -uroot -p$dbrootpwd -e "delete from mysql.db where User='';"
+$db_install_prefix/bin/mysql -uroot -p$dbrootpwd -e "drop database test;"
+$db_install_prefix/bin/mysql -uroot -p$dbrootpwd -e "reset master;"
 /sbin/service mysqld restart
 }
 
@@ -331,11 +464,11 @@ cat >> /etc/ld.so.conf.d/local.conf <<EOF
 /usr/local/lib
 EOF
 cat >> /etc/ld.so.conf.d/mysql.conf <<EOF
-/usr/local/mysql/lib
+$db_install_prefix/lib
 EOF
 /sbin/ldconfig
 ln -s /usr/local/bin/libmcrypt-config /usr/bin/libmcrypt-config
-ln -s /usr/local/mysql/include/* /usr/local/include/
+ln -s $db_install_prefix/include/* /usr/local/include/
 ln -s /usr/local/include/ImageMagick-6 /usr/local/include/ImageMagick
 if [ `getconf WORD_BIT` = '32' ] && [ `getconf LONG_BIT` = '64' ] ; then
         ln -s /lib64/libpcre.so.0.0.1 /lib64/libpcre.so.1
@@ -354,8 +487,8 @@ cd ../
 tar xzf php-5.5.1.tar.gz
 cd php-5.5.1
 ./configure  --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc \
---with-fpm-user=www --with-fpm-group=www --enable-opcache --enable-fpm --with-mysql=/usr/local/mysql \
---with-mysqli=/usr/local/mysql/bin/mysql_config --with-pdo-mysql \
+--with-fpm-user=www --with-fpm-group=www --enable-opcache --enable-fpm --with-mysql=$db_install_prefix \
+--with-mysqli=$db_install_prefix/bin/mysql_config --with-pdo-mysql \
 --with-iconv-dir=/usr/local --with-freetype-dir --with-jpeg-dir --with-png-dir --with-zlib \
 --with-libxml-dir=/usr --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-exif \
 --enable-sysvsem --enable-inline-optimization --with-curl --with-kerberos --enable-mbregex \
@@ -409,8 +542,11 @@ sed -i 's@^post_max_size.*@post_max_size = 50M@' /usr/local/php/etc/php.ini
 sed -i 's@^upload_max_filesize.*@upload_max_filesize = 50M@' /usr/local/php/etc/php.ini
 sed -i 's@^;upload_tmp_dir.*@upload_tmp_dir = /tmp@' /usr/local/php/etc/php.ini
 sed -i 's@^max_execution_time.*@max_execution_time = 300@' /usr/local/php/etc/php.ini
-sed -i 's@^disable_functions.*@disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server,fsocket@' /usr/local/php/etc/php.ini
+sed -i 's@^disable_functions.*@disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_s
+tatus,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server,fsocket@' /usr/local/php/
+etc/php.ini
 sed -i 's@^session.cookie_httponly.*@session.cookie_httponly = 1@' /usr/local/php/etc/php.ini
+sed -i 's@^pdo_mysql.default_socket.*@pdo_mysql.default_socket = /tmp/mysql.sock@' /usr/local/php/etc/php.ini
 sed -i 's@#sendmail_path.*@#sendmail_path = /usr/sbin/sendmail -t@' /usr/local/php/etc/php.ini
 
 sed -i 's@^\[opcache\]@[opcache]\nzend_extension=opcache.so@' /usr/local/php/etc/php.ini
@@ -421,7 +557,6 @@ sed -i 's@^;opcache.max_accelerated_files.*@opcache.max_accelerated_files=4000@'
 sed -i 's@^;opcache.revalidate_freq.*@opcache.revalidate_freq=60@' /usr/local/php/etc/php.ini
 sed -i 's@^;opcache.fast_shutdown.*@opcache.fast_shutdown=1@' /usr/local/php/etc/php.ini
 sed -i 's@^;opcache.enable_cli.*@opcache.enable_cli=1@' /usr/local/php/etc/php.ini
-
 }
 
 function Install_Memcache()
@@ -458,7 +593,7 @@ function Install_Pureftp()
 cd /root/lamp/source
 tar xzf pure-ftpd-1.0.36.tar.gz
 cd pure-ftpd-1.0.36
-./configure --prefix=/usr/local/pureftpd CFLAGS=-O2 --with-mysql=/usr/local/mysql --with-quotas --with-cookie --with-virtualhosts --with-virtualchroot --with-diraliases --with-sysquotas --with-ratios --with-altlog --with-paranoidmsg --with-shadow --with-welcomemsg  --with-throttling --with-uploadscript --with-language=english 
+./configure --prefix=/usr/local/pureftpd CFLAGS=-O2 --with-mysql=$db_install_prefix --with-quotas --with-cookie --with-virtualhosts --with-virtualchroot --with-diraliases --with-sysquotas --with-ratios --with-altlog --with-paranoidmsg --with-shadow --with-welcomemsg  --with-throttling --with-uploadscript --with-language=english 
 make && make install
 cp configuration-file/pure-config.pl /usr/local/pureftpd/sbin
 chmod +x /usr/local/pureftpd/sbin/pure-config.pl
@@ -477,7 +612,7 @@ mysqlftppwd=`cat /dev/urandom | head -1 | md5sum | head -c 8`
 sed -i 's/tmppasswd/'$mysqlftppwd'/g' /usr/local/pureftpd/pureftpd-mysql.conf
 sed -i 's/mysqlftppwd/'$mysqlftppwd'/g' script.mysql
 sed -i 's/ftpmanagerpwd/'$ftpmanagerpwd'/g' script.mysql
-/usr/local/mysql/bin/mysql -uroot -p$mysqlrootpwd< script.mysql
+$db_install_prefix/bin/mysql -uroot -p$mysqlrootpwd< script.mysql
 service pureftpd start
 
 tar xzf /root/lamp/source/ftp_v2.1.tar.gz -C $home_dir 
@@ -533,7 +668,14 @@ Download_src 2>&1 | tee -a /root/lamp/lamp_install.log
 chmod +x /root/lamp/{init,vhost}.sh
 sed -i "s@/home/wwwroot@$home_dir@g" /root/lamp/vhost.sh
 /root/lamp/init.sh 2>&1 | tee -a /root/lamp/lamp_install.log 
-Install_MySQL 2>&1 | tee -a /root/lamp/lamp_install.log 
+if [ $choice_db == 'mysql' ];then
+        db_install_prefix=/usr/local/mysql
+        Install_MySQL 2>&1 | tee -a /root/lamp/lamp_install.log
+fi
+if [ $choice_db == 'mariadb' ];then
+        db_install_prefix=/usr/local/mariadb
+        Install_MariaDB 2>&1 | tee -a /root/lamp/lamp_install.log
+fi
 Install_Apache 2>&1 | tee -a /root/lamp/lamp_install.log 
 Install_PHP 2>&1 | tee -a /root/lamp/lamp_install.log 
 
@@ -556,9 +698,9 @@ echo "################Congratulations####################"
 echo -e "\033[32mPlease restart the server and see if the services start up fine.\033[0m"
 echo ''
 echo "The path of some dirs:"
-echo -e "Apache dir:                    \033[32m/usr/local/apache\033[0m"
-echo -e "MySQL dir:                     \033[32m/usr/local/mysql\033[0m"
-echo -e "PHP dir:                       \033[32m/usr/local/php\033[0m"
-echo -e "MySQL User:                    \033[32mroot\033[0m"
-echo -e "MySQL Password:                \033[32m${mysqlrootpwd}\033[0m"
-echo -e "Manager url:                   \033[32mhttp://$IP/\033[0m"
+echo -e "Apache dir:                      \033[32m/usr/local/apache\033[0m"
+echo -e "$choice_DB dir:                  \033[32m$db_install_prefix\033[0m"
+echo -e "PHP dir:                         \033[32m/usr/local/php\033[0m"
+echo -e "$choice_DB User:                 \033[32mroot\033[0m"
+echo -e "$choice_DB Password:             \033[32m${dbrootpwd}\033[0m"
+echo -e "Manager url:                     \033[32mhttp://$IP/\033[0m"
