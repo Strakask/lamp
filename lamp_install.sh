@@ -167,7 +167,7 @@ cat > /etc/my.cnf << EOF
 [mysqld]
 basedir = $db_install_dir
 datadir = $db_data_dir
-pid-file = /var/run/mysql.pid
+pid-file = $db_data_dir/mysql.pid
 character-set-server = utf8
 collation-server = utf8_general_ci
 user = mysql
@@ -282,7 +282,7 @@ cat > /etc/my.cnf << EOF
 [mysqld]
 basedir = $db_install_dir
 datadir = $db_data_dir
-pid-file = /var/run/mariadb.pid
+pid-file = $db_data_dir/mariadb.pid
 character-set-server = utf8
 collation-server = utf8_general_ci
 user = mysql
