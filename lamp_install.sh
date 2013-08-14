@@ -96,10 +96,10 @@ cd /root/lamp/source
 [ -s php-5.5.1.tar.gz ] && echo 'php-5.5.1.tar.gz found' || wget -c http://kr1.php.net/distributions/php-5.5.1.tar.gz
 [ -s memcached-1.4.15.tar.gz ] && echo 'memcached-1.4.15.tar.gz found' || wget -c --no-check-certificate https://memcached.googlecode.com/files/memcached-1.4.15.tar.gz
 [ -s memcache-2.2.7.tgz ] && echo 'memcache-2.2.7.tgz found' || wget -c http://pecl.php.net/get/memcache-2.2.7.tgz
-[ -s ImageMagick-6.8.6-6.tar.gz ] && echo 'ImageMagick-6.8.6-6.tar.gz found' || wget -c http://www.imagemagick.org/download/ImageMagick-6.8.6-8.tar.gz 
+[ -s ImageMagick-6.8.6-8.tar.gz ] && echo 'ImageMagick-6.8.6-8.tar.gz found' || wget -c http://www.imagemagick.org/download/ImageMagick-6.8.6-8.tar.gz 
 [ -s imagick-3.1.0RC2.tgz ] && echo 'imagick-3.1.0RC2.tgz found' || wget -c http://pecl.php.net/get/imagick-3.1.0RC2.tgz
 [ -s pecl_http-1.7.6.tgz ] && echo 'pecl_http-1.7.6.tgz found' || wget -c http://pecl.php.net/get/pecl_http-1.7.6.tgz
-[ -s pcre-8.33.tar.gz ] && echo 'pcre-8.33.tar.gz found' || wget -c http://ftp.exim.llorien.org/pcre/pcre-8.33.tar.gz 
+[ -s pcre-8.33.tar.gz ] && echo 'pcre-8.33.tar.gz found' || wget -c http://downloads.sourceforge.net/project/pcre/pcre/8.33/pcre-8.33.tar.gz 
 [ -s apr-1.4.8.tar.gz ] && echo 'apr-1.4.8.tar.gz found' || wget -c http://archive.apache.org/dist/apr/apr-1.4.8.tar.gz 
 [ -s apr-util-1.5.2.tar.gz ] && echo 'apr-util-1.5.2.tar.gz found' || wget -c http://archive.apache.org/dist/apr/apr-util-1.5.2.tar.gz 
 [ -s httpd-2.4.6.tar.gz ] && echo 'httpd-2.4.6.tar.gz found' || wget -c http://www.apache.org/dist/httpd/httpd-2.4.6.tar.gz 
@@ -450,8 +450,8 @@ cd mhash-0.9.9.9
 make && make install
 cd ../
 
-tar xzf ImageMagick-6.8.6-6.tar.gz
-cd ImageMagick-6.8.6-6
+tar xzf ImageMagick-6.8.6-8.tar.gz
+cd ImageMagick-6.8.6-8
 ./configure
 make && make install
 cd ../
