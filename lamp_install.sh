@@ -103,7 +103,7 @@ cd /root/lamp/source
 [ -s apr-1.4.8.tar.gz ] && echo 'apr-1.4.8.tar.gz found' || wget -c http://archive.apache.org/dist/apr/apr-1.4.8.tar.gz 
 [ -s apr-util-1.5.2.tar.gz ] && echo 'apr-util-1.5.2.tar.gz found' || wget -c http://archive.apache.org/dist/apr/apr-util-1.5.2.tar.gz 
 [ -s httpd-2.4.6.tar.gz ] && echo 'httpd-2.4.6.tar.gz found' || wget -c http://www.apache.org/dist/httpd/httpd-2.4.6.tar.gz 
-[ -s pure-ftpd-1.0.36.tar.gz ] && echo 'pure-ftpd-1.0.36.tar.gz found' || wget -c ftp://ftp.pureftpd.org/pub/pure-ftpd/releases/pure-ftpd-1.0.36.tar.gz
+[ -s pure-ftpd-1.0.36.tar.gz ] && echo 'pure-ftpd-1.0.36.tar.gz found' || wget -c http://download.pureftpd.org/pub/pure-ftpd/releases/pure-ftpd-1.0.36.tar.gz 
 [ -s ftp_v2.1.tar.gz ] && echo 'ftp_v2.1.tar.gz found' || wget -c http://machiel.generaal.net/files/pureftpd/ftp_v2.1.tar.gz 
 [ -s phpMyAdmin-4.0.5-all-languages.tar.gz ] && echo 'phpMyAdmin-4.0.5-all-languages.tar.gz found' || wget -c http://iweb.dl.sourceforge.net/project/phpmyadmin/phpMyAdmin/4.0.5/phpMyAdmin-4.0.5-all-languages.tar.gz
 # check source packages
