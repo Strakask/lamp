@@ -14,8 +14,8 @@ IP=`ifconfig | grep 'inet addr:' | cut -d: -f2 | grep -v ^10\. | grep -v ^192\.1
 
 #Definition Directory
 home_dir=/home/wwwroot
-mkdir -p $home_dir
-mkdir -p /root/lamp/{source,conf}
+wwwlogs_dir=/home/wwwlogs
+mkdir -p $home_dir/default $wwwlogs_dir /root/lamp/{source,conf}
 
 #choice database
 while :
@@ -83,6 +83,7 @@ cd conf
 [ -s index.html ] && echo 'index.html found' || wget -c --no-check-certificate https://raw.github.com/lj2007331/lamp/master/conf/index.html
 [ -s pure-ftpd.conf ] && echo 'pure-ftpd.conf found' || wget -c --no-check-certificate https://raw.github.com/lj2007331/lamp/master/conf/pure-ftpd.conf
 [ -s pureftpd-mysql.conf ] && echo 'pureftpd-mysql.conf found' || wget -c --no-check-certificate https://raw.github.com/lj2007331/lamp/master/conf/pureftpd-mysql.conf
+[ -s chinese.php ] && echo 'chinese.php found' || wget -c --no-check-certificate https://raw.github.com/lj2007331/lamp/master/conf/chinese.php 
 [ -s script.mysql ] && echo 'script.mysql found' || wget -c --no-check-certificate https://raw.github.com/lj2007331/lamp/master/conf/script.mysql
 cd /root/lamp/source
 [ -s tz.zip ] && echo 'tz.zip found' || wget -c http://www.yahei.net/tz/tz.zip
@@ -99,7 +100,7 @@ cd /root/lamp/source
 [ -s ImageMagick-6.8.6-8.tar.gz ] && echo 'ImageMagick-6.8.6-8.tar.gz found' || wget -c http://www.imagemagick.org/download/ImageMagick-6.8.6-8.tar.gz 
 [ -s imagick-3.1.0RC2.tgz ] && echo 'imagick-3.1.0RC2.tgz found' || wget -c http://pecl.php.net/get/imagick-3.1.0RC2.tgz
 [ -s pecl_http-1.7.6.tgz ] && echo 'pecl_http-1.7.6.tgz found' || wget -c http://pecl.php.net/get/pecl_http-1.7.6.tgz
-[ -s pcre-8.33.tar.gz ] && echo 'pcre-8.33.tar.gz found' || wget -c http://downloads.sourceforge.net/project/pcre/pcre/8.33/pcre-8.33.tar.gz 
+[ -s pcre-8.33.tar.gz ] && echo 'pcre-8.33.tar.gz found' || wget -c http://ftp.cs.stanford.edu/pub/exim/pcre/pcre-8.33.tar.gz 
 [ -s apr-1.4.8.tar.gz ] && echo 'apr-1.4.8.tar.gz found' || wget -c http://archive.apache.org/dist/apr/apr-1.4.8.tar.gz 
 [ -s apr-util-1.5.2.tar.gz ] && echo 'apr-util-1.5.2.tar.gz found' || wget -c http://archive.apache.org/dist/apr/apr-util-1.5.2.tar.gz 
 [ -s httpd-2.4.6.tar.gz ] && echo 'httpd-2.4.6.tar.gz found' || wget -c http://www.apache.org/dist/httpd/httpd-2.4.6.tar.gz 
@@ -107,7 +108,7 @@ cd /root/lamp/source
 [ -s ftp_v2.1.tar.gz ] && echo 'ftp_v2.1.tar.gz found' || wget -c http://machiel.generaal.net/files/pureftpd/ftp_v2.1.tar.gz 
 [ -s phpMyAdmin-4.0.5-all-languages.tar.gz ] && echo 'phpMyAdmin-4.0.5-all-languages.tar.gz found' || wget -c http://iweb.dl.sourceforge.net/project/phpmyadmin/phpMyAdmin/4.0.5/phpMyAdmin-4.0.5-all-languages.tar.gz
 # check source packages
-for src in `cat ./lamp_install.sh | grep found.*wget | awk '{print $3}' | grep gz`
+for src in `cat /root/lamp/lamp_install.sh | grep found.*wget | awk '{print $3}' | grep gz`
 do
         if [ ! -e "/root/lamp/source/$src" ];then
 		echo -e "\033[31m$src no found! \033[0m"
@@ -371,7 +372,8 @@ chkconfig httpd on
 cd ..
 
 #logrotate apache log
-echo '/usr/local/apache/logs/*.log {
+cat > /etc/logrotate.d/apache << EOF
+$wwwlogs_dir/*.log {
 daily
 rotate 5
 missingok
@@ -380,9 +382,10 @@ compress
 notifempty
 sharedscripts
 postrotate
-    [ -f /usr/local/apache/logs/httpd.pid ] && kill -USR1 `cat /usr/local/apache/logs/httpd.pid`
+    [ -f /usr/local/apache/logs/httpd.pid ] && kill -USR1 \`cat /usr/local/apache/logs/httpd.pid\`
 endscript
-}' > /etc/logrotate.d/apache
+}
+EOF
 
 service httpd start
 }
@@ -395,17 +398,17 @@ sed -i 's/^#ServerName www.example.com:80/ServerName 0.0.0.0:80/' /usr/local/apa
 sed -i "s@AddType\(.*\)Z@AddType\1Z\n    AddType application/x-httpd-php .php .phtml\n    AddType application/x-httpd-php-source .phps@" /usr/local/apache/conf/httpd.conf
 sed -i 's@^#LoadModule\(.*\)mod_deflate.so@LoadModule\1mod_deflate.so@' /usr/local/apache/conf/httpd.conf
 sed -i 's@DirectoryIndex index.html@DirectoryIndex index.html index.php@' /usr/local/apache/conf/httpd.conf
-sed -i "s@^DocumentRoot.*@DocumentRoot \"$home_dir\"@" /usr/local/apache/conf/httpd.conf
-sed -i "s@^<Directory \"/usr/local/apache/htdocs\">@<Directory \"$home_dir\">@" /usr/local/apache/conf/httpd.conf
+sed -i "s@^DocumentRoot.*@DocumentRoot \"$home_dir/default\"@" /usr/local/apache/conf/httpd.conf
+sed -i "s@^<Directory \"/usr/local/apache/htdocs\">@<Directory \"$home_dir/default\">@" /usr/local/apache/conf/httpd.conf
 mkdir /usr/local/apache/conf/vhost
 cat > /usr/local/apache/conf/vhost/admin.conf << EOF
 <VirtualHost *:80>
     ServerAdmin admin@linuxeye.com
-    DocumentRoot "$home_dir"
+    DocumentRoot "$home_dir/default"
     ServerName $IP
-    ErrorLog "logs/admin-error.log"
-    CustomLog "logs/admin-access.log" common
-<Directory "$home_dir">
+    ErrorLog "$wwwlogs_dir/admin-error.log"
+    CustomLog "$wwwlogs_dir/admin-access.log" common
+<Directory "$home_dir/default">
     SetOutputFilter DEFLATE
     Options FollowSymLinks
     AllowOverride All
@@ -612,18 +615,21 @@ sed -i 's/ftpmanagerpwd/'$ftpmanagerpwd'/g' script.mysql
 $db_install_dir/bin/mysql -uroot -p$mysqlrootpwd< script.mysql
 service pureftpd start
 
-tar xzf /root/lamp/source/ftp_v2.1.tar.gz -C $home_dir 
-sed -i 's/tmppasswd/'$mysqlftppwd'/' $home_dir/ftp/config.php
-sed -i "s/myipaddress.com/`echo $IP`/" $home_dir/ftp/config.php
-sed -i 's@\$DEFUserID.*;@\$DEFUserID = "501";@' $home_dir/ftp/config.php
-sed -i 's@\$DEFGroupID.*;@\$DEFGroupID = "501";@' $home_dir/ftp/config.php
-sed -i 's@iso-8859-1@UTF-8@' $home_dir/ftp/language/english.php
-rm -rf  $home_dir/ftp/install.php
+tar xzf /root/lamp/source/ftp_v2.1.tar.gz
+sed -i 's/tmppasswd/'$mysqlftppwd'/' ftp/config.php
+sed -i "s/myipaddress.com/`echo $IP`/" ftp/config.php
+sed -i 's@\$DEFUserID.*;@\$DEFUserID = "501";@' ftp/config.php
+sed -i 's@\$DEFGroupID.*;@\$DEFGroupID = "501";@' ftp/config.php
+sed -i 's@iso-8859-1@UTF-8@' ftp/language/english.php
+/bin/cp /root/lamp/conf/chinese.php ftp/language/
+sed -i 's@\$LANG.*;@\$LANG = "chinese";@' ftp/config.php
+rm -rf  ftp/install.php
+mv ftp $home_dir/default
 }
 
 function Install_phpMyAdmin()
 { 
-cd $home_dir
+cd $home_dir/default
 tar xzf /root/lamp/source/phpMyAdmin-4.0.5-all-languages.tar.gz
 mv phpMyAdmin-4.0.5-all-languages phpMyAdmin
 }
@@ -632,10 +638,10 @@ function TEST()
 {
 echo '<?php
 phpinfo()
-?>' > $home_dir/phpinfo.php
-cp /root/lamp/conf/index.html $home_dir
-unzip -q /root/lnmp/source/tz.zip -d $home_dir
-chown -R www.www $home_dir
+?>' > $home_dir/default/phpinfo.php
+cp /root/lamp/conf/index.html $home_dir/default
+unzip -q /root/lamp/source/tz.zip -d $home_dir/default
+chown -R www.www $home_dir/default
 service httpd restart
 }
 
@@ -648,6 +654,7 @@ cat > /etc/sysconfig/iptables << EOF
 :INPUT DROP [0:0]
 :FORWARD ACCEPT [0:0]
 :OUTPUT ACCEPT [0:0]
+:syn-flood - [0:0]
 -A INPUT -i lo -j ACCEPT
 -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 -A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
@@ -656,6 +663,10 @@ cat > /etc/sysconfig/iptables << EOF
 -A INPUT -p tcp -m state --state NEW -m tcp --dport 20000:30000 -j ACCEPT
 -A INPUT -p icmp -m limit --limit 100/sec --limit-burst 100 -j ACCEPT
 -A INPUT -p icmp -m limit --limit 1/s --limit-burst 10 -j ACCEPT
+-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j syn-flood
+-A INPUT -j REJECT --reject-with icmp-host-prohibited
+-A syn-flood -p tcp -m limit --limit 3/sec --limit-burst 6 -j RETURN
+-A syn-flood -j REJECT --reject-with icmp-port-unreachable
 COMMIT
 EOF
 service iptables restart
@@ -664,6 +675,7 @@ service iptables restart
 Download_src 2>&1 | tee -a /root/lamp/lamp_install.log 
 chmod +x /root/lamp/{init,vhost}.sh
 sed -i "s@/home/wwwroot@$home_dir@g" /root/lamp/vhost.sh
+sed -i "s@/home/wwwlogs@$wwwlogs_dir@g" /root/lamp/vhost.sh
 /root/lamp/init.sh 2>&1 | tee -a /root/lamp/lamp_install.log 
 if [ $choice_db == 'mysql' ];then
         db_install_dir=/usr/local/mysql

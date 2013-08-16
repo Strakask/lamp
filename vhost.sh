@@ -63,9 +63,9 @@ echo "################################"
 if [ "$access_log" == 'n' ]; then
 	al='CustomLog "/dev/null" common'
 else
-	al=CustomLog \"logs/${domain}-access.log common\"
+	al=CustomLog \"/home/wwwlogs/${domain}-access.log common\"
 	echo "################################"
-	echo You access log file="/usr/local/apache/logs/${domain}-access.log"
+	echo You access log file="/home/wwwlogs/${domain}-access.log"
 	echo "################################"
 fi
 
@@ -83,7 +83,7 @@ cat >/usr/local/apache/conf/vhost/$domain.conf<<EOF
     DocumentRoot "$vhostdir"
     ServerName $domain 
     $sa
-    ErrorLog "logs/${domain}-error.log"
+    ErrorLog "/home/wwwlogs/${domain}-error.log"
     $al
 <Directory "$vhostdir">
     SetOutputFilter DEFLATE
