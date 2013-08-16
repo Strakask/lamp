@@ -91,9 +91,9 @@ cd /root/lamp/source
 [ -s mysql-5.6.13.tar.gz ] && echo 'mysql-5.6.13.tar.gz found' || wget -c http://cdn.mysql.com/Downloads/MySQL-5.6/mysql-5.6.13.tar.gz 
 [ -s mariadb-5.5.32.tar.gz ] && echo 'mariadb-5.5.32.tar.gz found' || wget -c http://ftp.osuosl.org/pub/mariadb/mariadb-5.5.32/kvm-tarbake-jaunty-x86/mariadb-5.5.32.tar.gz
 [ -s libiconv-1.14.tar.gz ] && echo 'libiconv-1.14.tar.gz found' || wget -c http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz
-[ -s libmcrypt-2.5.8.tar.gz ] && echo 'libmcrypt-2.5.8.tar.gz found' || wget -c http://iweb.dl.sourceforge.net/project/mcrypt/Libmcrypt/2.5.8/libmcrypt-2.5.8.tar.gz
-[ -s mhash-0.9.9.9.tar.gz ] && echo 'mhash-0.9.9.9.tar.gz found' || wget -c http://iweb.dl.sourceforge.net/project/mhash/mhash/0.9.9.9/mhash-0.9.9.9.tar.gz
-[ -s mcrypt-2.6.8.tar.gz ] && echo 'mcrypt-2.6.8.tar.gz found' || wget -c --no-check-certificate https://vps.googlecode.com/files/mcrypt-2.6.8.tar.gz
+[ -s mcrypt-2.6.8.tar.gz ] && echo 'mcrypt-2.6.8.tar.gz found' || wget -c http://sourceforge.net/projects/mcrypt/files/MCrypt/2.6.8/mcrypt-2.6.8.tar.gz/download
+[ -s libmcrypt-2.5.8.tar.gz ] && echo 'libmcrypt-2.5.8.tar.gz found' || wget -c http://sourceforge.net/projects/mcrypt/files/Libmcrypt/2.5.8/libmcrypt-2.5.8.tar.gz/download
+[ -s mhash-0.9.9.9.tar.gz ] && echo 'mhash-0.9.9.9.tar.gz found' || wget -c http://sourceforge.net/projects/mhash/files/mhash/0.9.9.9/mhash-0.9.9.9.tar.gz/download
 [ -s php-5.5.1.tar.gz ] && echo 'php-5.5.1.tar.gz found' || wget -c http://kr1.php.net/distributions/php-5.5.1.tar.gz
 [ -s memcached-1.4.15.tar.gz ] && echo 'memcached-1.4.15.tar.gz found' || wget -c --no-check-certificate https://memcached.googlecode.com/files/memcached-1.4.15.tar.gz
 [ -s memcache-2.2.7.tgz ] && echo 'memcache-2.2.7.tgz found' || wget -c http://pecl.php.net/get/memcache-2.2.7.tgz
@@ -106,7 +106,8 @@ cd /root/lamp/source
 [ -s httpd-2.4.6.tar.gz ] && echo 'httpd-2.4.6.tar.gz found' || wget -c http://www.apache.org/dist/httpd/httpd-2.4.6.tar.gz 
 [ -s pure-ftpd-1.0.36.tar.gz ] && echo 'pure-ftpd-1.0.36.tar.gz found' || wget -c http://download.pureftpd.org/pub/pure-ftpd/releases/pure-ftpd-1.0.36.tar.gz 
 [ -s ftp_v2.1.tar.gz ] && echo 'ftp_v2.1.tar.gz found' || wget -c http://machiel.generaal.net/files/pureftpd/ftp_v2.1.tar.gz 
-[ -s phpMyAdmin-4.0.5-all-languages.tar.gz ] && echo 'phpMyAdmin-4.0.5-all-languages.tar.gz found' || wget -c http://iweb.dl.sourceforge.net/project/phpmyadmin/phpMyAdmin/4.0.5/phpMyAdmin-4.0.5-all-languages.tar.gz
+[ -s phpMyAdmin-4.0.5-all-languages.tar.gz ] && echo 'phpMyAdmin-4.0.5-all-languages.tar.gz found' || wget -c http://sourceforge.net/projects/phpmyadmin/files/phpMyAdmin/4.0.5/phpMyAdmin-4.0.5-all-languages.tar.gz/download
+
 # check source packages
 for src in `cat /root/lamp/lamp_install.sh | grep found.*wget | awk '{print $3}' | grep gz`
 do
@@ -486,8 +487,8 @@ cd ../
 
 tar xzf php-5.5.1.tar.gz
 cd php-5.5.1
-./configure  --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc \
---with-fpm-user=www --with-fpm-group=www --enable-opcache --enable-fpm --with-mysql=$db_install_dir \
+./configure  --prefix=/usr/local/php --with-apxs2=/usr/local/apache/bin/apxs \
+--with-config-file-path=/usr/local/php/etc --enable-opcache --with-mysql=$db_install_dir \
 --with-mysqli=$db_install_dir/bin/mysql_config --with-pdo-mysql --disable-fileinfo \
 --with-iconv-dir=/usr/local --with-freetype-dir --with-jpeg-dir --with-png-dir --with-zlib \
 --with-libxml-dir=/usr --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-exif \
@@ -542,9 +543,7 @@ sed -i 's@^post_max_size.*@post_max_size = 50M@' /usr/local/php/etc/php.ini
 sed -i 's@^upload_max_filesize.*@upload_max_filesize = 50M@' /usr/local/php/etc/php.ini
 sed -i 's@^;upload_tmp_dir.*@upload_tmp_dir = /tmp@' /usr/local/php/etc/php.ini
 sed -i 's@^max_execution_time.*@max_execution_time = 300@' /usr/local/php/etc/php.ini
-sed -i 's@^disable_functions.*@disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_s
-tatus,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server,fsocket@' /usr/local/php/
-etc/php.ini
+sed -i 's@^disable_functions.*@disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server,fsocket@' /usr/local/php/etc/php.ini
 sed -i 's@^session.cookie_httponly.*@session.cookie_httponly = 1@' /usr/local/php/etc/php.ini
 sed -i 's@^pdo_mysql.default_socket.*@pdo_mysql.default_socket = /tmp/mysql.sock@' /usr/local/php/etc/php.ini
 sed -i 's@#sendmail_path.*@#sendmail_path = /usr/sbin/sendmail -t@' /usr/local/php/etc/php.ini
@@ -612,7 +611,7 @@ mysqlftppwd=`cat /dev/urandom | head -1 | md5sum | head -c 8`
 sed -i 's/tmppasswd/'$mysqlftppwd'/g' /usr/local/pureftpd/pureftpd-mysql.conf
 sed -i 's/mysqlftppwd/'$mysqlftppwd'/g' script.mysql
 sed -i 's/ftpmanagerpwd/'$ftpmanagerpwd'/g' script.mysql
-$db_install_dir/bin/mysql -uroot -p$mysqlrootpwd< script.mysql
+$db_install_dir/bin/mysql -uroot -p$dbrootpwd < script.mysql
 service pureftpd start
 
 tar xzf /root/lamp/source/ftp_v2.1.tar.gz
