@@ -3,7 +3,7 @@
 [ $(id -u) != "0" ] && echo "Error: You must be root to run this script, please use root to install lamp" && kill -9 $$
 
 echo "#######################################################################"
-echo "#                    LNMP for CentOS/RadHat 5/6                       #"
+echo "#                    LAMP for CentOS/RadHat 5/6                       #"
 echo "# For more information please visit http://blog.linuxeye.com/82.html  #"
 echo "#######################################################################"
 echo ''
