@@ -676,7 +676,6 @@ chmod +x /root/lamp/{init,vhost}.sh
 sed -i "s@/home/wwwroot@$home_dir@g" /root/lamp/vhost.sh
 sed -i "s@/home/wwwlogs@$wwwlogs_dir@g" /root/lamp/vhost.sh
 /root/lamp/init.sh 2>&1 | tee -a /root/lamp/lamp_install.log 
-screen -S lamp
 if [ $choice_db == 'mysql' ];then
         db_install_dir=/usr/local/mysql
 	db_data_dir=/data/mysql
