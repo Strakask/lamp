@@ -107,7 +107,7 @@ echo "#                    LNMP for CentOS/RadHat 5/6                       #"
 echo "# For more information please visit http://blog.linuxeye.com/82.html  #"
 echo "#######################################################################"
 echo ''
-echo "Your domain:$domain"
-echo "Directory of $domain:$vhostdir"
+echo -e "`printf "%-40s" "Your domain:"`\033[32m$domain\033[0m"
+echo -e "`printf "%-40s" "Directory of $domain:"`\033[32m$vhostdir\033[0m"
 echo ''
 echo "#######################################################################"
