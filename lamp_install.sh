@@ -508,7 +508,7 @@ fi
 #wget -c http://pear.php.net/go-pear.phar
 #/usr/local/php/bin/php go-pear.phar
 
-cp php.ini-production /usr/local/php/etc/php.ini
+/bin/cp php.ini-production /usr/local/php/etc/php.ini
 cd ..
 
 tar xzf imagick-3.1.0RC2.tgz
@@ -562,7 +562,7 @@ cd memcache-2.2.7
 /usr/local/php/bin/phpize
 ./configure --with-php-config=/usr/local/php/bin/php-config
 make && make install
-sed -i 's@-zts-20121212/"@-zts-20121212/"\nextension = "memcache.so"@' /usr/local/php/etc/php.ini
+sed -i 's@^extension_dir\(.*\)@extension_dir\1\nextension = "memcache.so"@' /usr/local/php/etc/php.ini
 cd ../
 
 tar xzf memcached-1.4.15.tar.gz
