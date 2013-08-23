@@ -1,12 +1,22 @@
 #!/bin/bash
-# Check if user is root
-[ $(id -u) != "0" ] && echo "Error: You must be root to run this script, please use root to install lamp" && kill -9 $$
+# Author:  yeho
+#          <lj2007331 AT gmail.com>.
+# Blog:  http://blog.linuxeye.com
+#
+# Version:  0.1 21-Aug-2013 lj2007331 AT gmail.com
+# Notes: LAMP for CentOS/RadHat 5/6 
+#
+# This script's project home is:
+#       https://github.com/lj2007331/lamp
+export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 echo "#######################################################################"
 echo "#                    LAMP for CentOS/RadHat 5/6                       #"
-echo "# For more information please visit http://blog.linuxeye.com/82.html  #"
+echo "# For more information Please visit http://blog.linuxeye.com/82.html  #"
 echo "#######################################################################"
-echo ''
+
+# Check if user is root
+[ $(id -u) != "0" ] && echo "Error: You must be root to run this script, Please use root to install lamp" && kill -9 $$
 
 # get ipv4 
 IP=`ifconfig | grep 'inet addr:' | cut -d: -f2 | grep -v ^10\. | grep -v ^192\.168 | grep -v ^172\. | grep -v ^127\. | awk '{print  $1}' | awk '{print;exit}'`
@@ -23,7 +33,7 @@ do
         read -p "Do you want to install MySQL or MariaDB ? ( MySQL / MariaDB ) " choice_DB
         choice_db=`echo $choice_DB | tr [A-Z] [a-z]`
         if [ "$choice_db" != 'mariadb' ] && [ "$choice_db" != 'mysql' ];then
-                echo -e "\033[31minput error! please input 'MySQL' or 'MariaDB'\033[0m"
+                echo -e "\033[31minput error! Please input 'MySQL' or 'MariaDB'\033[0m"
         else
                 break
         fi
@@ -40,7 +50,7 @@ while :
 do
         read -p "Do you want to install Memcache? (y/n)" Memcache_yn
         if [ "$Memcache_yn" != 'y' ] && [ "$Memcache_yn" != 'n' ];then
-                echo -e "\033[31minput error! please input 'y' or 'n'\033[0m"
+                echo -e "\033[31minput error! Please input 'y' or 'n'\033[0m"
         else
                 break
         fi
@@ -50,7 +60,7 @@ while :
 do
         read -p "Do you want to install Pure-FTPd? (y/n)" FTP_yn
         if [ "$FTP_yn" != 'y' ] && [ "$FTP_yn" != 'n' ];then
-                echo -e "\033[31minput error! please input 'y' or 'n'\033[0m"
+                echo -e "\033[31minput error! Please input 'y' or 'n'\033[0m"
         else
                 break
         fi
@@ -68,7 +78,7 @@ while :
 do
         read -p "Do you want to install phpMyAdmin? (y/n)" phpMyAdmin_yn
         if [ "$phpMyAdmin_yn" != 'y' ] && [ "$phpMyAdmin_yn" != 'n' ];then
-                echo -e "\033[31minput error! please input 'y' or 'n'\033[0m"
+                echo -e "\033[31minput error! Please input 'y' or 'n'\033[0m"
         else
                 break
         fi
@@ -94,7 +104,7 @@ cd /root/lamp/source
 [ -s mcrypt-2.6.8.tar.gz ] && echo 'mcrypt-2.6.8.tar.gz found' || wget -c http://downloads.sourceforge.net/project/mcrypt/MCrypt/2.6.8/mcrypt-2.6.8.tar.gz
 [ -s libmcrypt-2.5.8.tar.gz ] && echo 'libmcrypt-2.5.8.tar.gz found' || wget -c http://downloads.sourceforge.net/project/mcrypt/Libmcrypt/2.5.8/libmcrypt-2.5.8.tar.gz
 [ -s mhash-0.9.9.9.tar.gz ] && echo 'mhash-0.9.9.9.tar.gz found' || wget -c http://downloads.sourceforge.net/project/mhash/mhash/0.9.9.9/mhash-0.9.9.9.tar.gz
-[ -s php-5.5.2.tar.gz ] && echo 'php-5.5.2.tar.gz found' || wget -c http://kr1.php.net/distributions/php-5.5.2.tar.gz
+[ -s php-5.5.3.tar.gz ] && echo 'php-5.5.3.tar.gz found' || wget -c http://kr1.php.net/distributions/php-5.5.3.tar.gz
 [ -s memcached-1.4.15.tar.gz ] && echo 'memcached-1.4.15.tar.gz found' || wget -c --no-check-certificate https://memcached.googlecode.com/files/memcached-1.4.15.tar.gz
 [ -s memcache-2.2.7.tgz ] && echo 'memcache-2.2.7.tgz found' || wget -c http://pecl.php.net/get/memcache-2.2.7.tgz
 [ -s ImageMagick-6.8.6-8.tar.gz ] && echo 'ImageMagick-6.8.6-8.tar.gz found' || wget -c http://www.imagemagick.org/download/ImageMagick-6.8.6-8.tar.gz 
@@ -113,7 +123,7 @@ for src in `cat /root/lamp/lamp_install.sh | grep found.*wget | awk '{print $3}'
 do
         if [ ! -e "/root/lamp/source/$src" ];then
 		echo -e "\033[31m$src no found! \033[0m"
-                echo -e "\033[31mUpdated version of the Package source,Please Contact Author! \033[0m"
+                echo -e "\033[31mUpdated version of the Package source, Please Contact the author! \033[0m"
                 kill -9 $$
         fi
 done
@@ -153,7 +163,7 @@ make && make install
 if [ -d "$db_install_dir" ];then
         echo -e "\033[32mMySQL install successfully! \033[0m"
 else
-        echo -e "\033[31mMySQL install failed,Please Contact Author! \033[0m"
+        echo -e "\033[31mMySQL install failed, Please Contact the author! \033[0m"
         kill -9 $$
 fi
 
@@ -268,7 +278,7 @@ make && make install
 if [ -d "$db_install_dir" ];then
         echo -e "\033[32mMariaDB install successfully! \033[0m"
 else
-        echo -e "\033[31mMariaDB install failed,Please Contact Author! \033[0m"
+        echo -e "\033[31mMariaDB install failed, Please Contact the author! \033[0m"
         kill -9 $$
 fi
 
@@ -485,8 +495,8 @@ cd mcrypt-2.6.8
 make && make install
 cd ../
 
-tar xzf php-5.5.2.tar.gz
-cd php-5.5.2
+tar xzf php-5.5.3.tar.gz
+cd php-5.5.3
 ./configure  --prefix=/usr/local/php --with-apxs2=/usr/local/apache/bin/apxs \
 --with-config-file-path=/usr/local/php/etc --enable-opcache --with-mysql=$db_install_dir \
 --with-mysqli=$db_install_dir/bin/mysql_config --with-pdo-mysql --disable-fileinfo \
@@ -502,7 +512,7 @@ make install
 if [ -d "/usr/local/php" ];then
         echo -e "\033[32mPHP install successfully! \033[0m"
 else
-        echo -e "\033[31mPHP install failed,Please Contact Author! \033[0m"
+        echo -e "\033[31mPHP install failed, Please Contact the author! \033[0m"
         kill -9 $$
 fi
 #wget -c http://pear.php.net/go-pear.phar
