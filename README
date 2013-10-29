@@ -1,16 +1,16 @@
 Source packages version:
-cmake-2.8.11.2.tar.gz
-mysql-5.6.13.tar.gz
-mariadb-5.5.32.tar.gz
+cmake-2.8.12.tar.gz
+mysql-5.6.14.tar.gz
+mariadb-5.5.33a.tar.gz
 libiconv-1.14.tar.gz
+mcrypt-2.6.8.tar.gz
 libmcrypt-2.5.8.tar.gz
 mhash-0.9.9.9.tar.gz
-mcrypt-2.6.8.tar.gz
-php-5.5.3.tar.gz
+php-5.5.5.tar.gz
 memcached-1.4.15.tar.gz
 memcache-2.2.7.tgz
-ImageMagick-6.8.6-9.tar.gz
-imagick-3.1.0RC2.tgz
+ImageMagick-6.8.7-3.tar.gz
+imagick-3.1.2.tgz
 pecl_http-1.7.6.tgz
 pcre-8.33.tar.gz
 apr-1.4.8.tar.gz
@@ -18,4 +18,4 @@ apr-util-1.5.2.tar.gz
 httpd-2.4.6.tar.gz
 pure-ftpd-1.0.36.tar.gz
 ftp_v2.1.tar.gz
-phpMyAdmin-4.0.5-all-languages.tar.gz
+phpMyAdmin-4.0.8-all-languages.tar.gz

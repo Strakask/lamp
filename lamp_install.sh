@@ -97,18 +97,18 @@ cd conf
 [ -s script.mysql ] && echo 'script.mysql found' || wget -c --no-check-certificate https://raw.github.com/lj2007331/lamp/master/conf/script.mysql
 cd /root/lamp/source
 [ -s tz.zip ] && echo 'tz.zip found' || wget -c http://www.yahei.net/tz/tz.zip
-[ -s cmake-2.8.11.2.tar.gz ] && echo 'cmake-2.8.11.2.tar.gz found' || wget -c http://www.cmake.org/files/v2.8/cmake-2.8.11.2.tar.gz
-[ -s mysql-5.6.13.tar.gz ] && echo 'mysql-5.6.13.tar.gz found' || wget -c http://cdn.mysql.com/Downloads/MySQL-5.6/mysql-5.6.13.tar.gz 
-[ -s mariadb-5.5.32.tar.gz ] && echo 'mariadb-5.5.32.tar.gz found' || wget -c http://ftp.osuosl.org/pub/mariadb/mariadb-5.5.32/kvm-tarbake-jaunty-x86/mariadb-5.5.32.tar.gz
+[ -s cmake-2.8.12.tar.gz ] && echo 'cmake-2.8.12.tar.gz found' || wget -c http://www.cmake.org/files/v2.8/cmake-2.8.12.tar.gz 
+[ -s mysql-5.6.14.tar.gz ] && echo 'mysql-5.6.14.tar.gz found' || wget -c http://cdn.mysql.com/Downloads/MySQL-5.6/mysql-5.6.14.tar.gz 
+[ -s mariadb-5.5.33a.tar.gz ] && echo 'mariadb-5.5.33a.tar.gz found' || wget -c http://ftp.osuosl.org/pub/mariadb/mariadb-5.5.33a/kvm-tarbake-jaunty-x86/mariadb-5.5.33a.tar.gz 
 [ -s libiconv-1.14.tar.gz ] && echo 'libiconv-1.14.tar.gz found' || wget -c http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz
 [ -s mcrypt-2.6.8.tar.gz ] && echo 'mcrypt-2.6.8.tar.gz found' || wget -c http://downloads.sourceforge.net/project/mcrypt/MCrypt/2.6.8/mcrypt-2.6.8.tar.gz
 [ -s libmcrypt-2.5.8.tar.gz ] && echo 'libmcrypt-2.5.8.tar.gz found' || wget -c http://downloads.sourceforge.net/project/mcrypt/Libmcrypt/2.5.8/libmcrypt-2.5.8.tar.gz
 [ -s mhash-0.9.9.9.tar.gz ] && echo 'mhash-0.9.9.9.tar.gz found' || wget -c http://downloads.sourceforge.net/project/mhash/mhash/0.9.9.9/mhash-0.9.9.9.tar.gz
-[ -s php-5.5.3.tar.gz ] && echo 'php-5.5.3.tar.gz found' || wget -c http://kr1.php.net/distributions/php-5.5.3.tar.gz
+[ -s php-5.5.5.tar.gz ] && echo 'php-5.5.5.tar.gz found' || wget -c http://kr1.php.net/distributions/php-5.5.5.tar.gz
 [ -s memcached-1.4.15.tar.gz ] && echo 'memcached-1.4.15.tar.gz found' || wget -c --no-check-certificate https://memcached.googlecode.com/files/memcached-1.4.15.tar.gz
 [ -s memcache-2.2.7.tgz ] && echo 'memcache-2.2.7.tgz found' || wget -c http://pecl.php.net/get/memcache-2.2.7.tgz
-[ -s ImageMagick-6.8.6-10.tar.gz ] && echo 'ImageMagick-6.8.6-10.tar.gz found' || wget -c http://www.imagemagick.org/download/ImageMagick-6.8.6-10.tar.gz 
-[ -s imagick-3.1.0RC2.tgz ] && echo 'imagick-3.1.0RC2.tgz found' || wget -c http://pecl.php.net/get/imagick-3.1.0RC2.tgz
+[ -s ImageMagick-6.8.7-3.tar.gz ] && echo 'ImageMagick-6.8.7-3.tar.gz found' || wget -c http://www.imagemagick.org/download/ImageMagick-6.8.7-3.tar.gz 
+[ -s imagick-3.1.2.tgz ] && echo 'imagick-3.1.2.tgz found' || wget -c http://pecl.php.net/get/imagick-3.1.2.tgz 
 [ -s pecl_http-1.7.6.tgz ] && echo 'pecl_http-1.7.6.tgz found' || wget -c http://pecl.php.net/get/pecl_http-1.7.6.tgz
 [ -s pcre-8.33.tar.gz ] && echo 'pcre-8.33.tar.gz found' || wget -c http://ftp.cs.stanford.edu/pub/exim/pcre/pcre-8.33.tar.gz 
 [ -s apr-1.4.8.tar.gz ] && echo 'apr-1.4.8.tar.gz found' || wget -c http://archive.apache.org/dist/apr/apr-1.4.8.tar.gz 
@@ -116,7 +116,7 @@ cd /root/lamp/source
 [ -s httpd-2.4.6.tar.gz ] && echo 'httpd-2.4.6.tar.gz found' || wget -c http://www.apache.org/dist/httpd/httpd-2.4.6.tar.gz 
 [ -s pure-ftpd-1.0.36.tar.gz ] && echo 'pure-ftpd-1.0.36.tar.gz found' || wget -c http://download.pureftpd.org/pub/pure-ftpd/releases/pure-ftpd-1.0.36.tar.gz 
 [ -s ftp_v2.1.tar.gz ] && echo 'ftp_v2.1.tar.gz found' || wget -c http://machiel.generaal.net/files/pureftpd/ftp_v2.1.tar.gz 
-[ -s phpMyAdmin-4.0.5-all-languages.tar.gz ] && echo 'phpMyAdmin-4.0.5-all-languages.tar.gz found' || wget -c http://downloads.sourceforge.net/project/phpmyadmin/phpMyAdmin/4.0.5/phpMyAdmin-4.0.5-all-languages.tar.gz
+[ -s phpMyAdmin-4.0.8-all-languages.tar.gz ] && echo 'phpMyAdmin-4.0.8-all-languages.tar.gz found' || wget -c http://downloads.sourceforge.net/project/phpmyadmin/phpMyAdmin/4.0.8/phpMyAdmin-4.0.8-all-languages.tar.gz 
 
 # check source packages
 for src in `cat /root/lamp/lamp_install.sh | grep found.*wget | awk '{print $3}' | grep gz`
@@ -134,13 +134,13 @@ function Install_MySQL()
 cd /root/lamp/source
 useradd -M -s /sbin/nologin mysql
 mkdir -p $db_data_dir;chown mysql.mysql -R $db_data_dir
-tar xzf cmake-2.8.11.2.tar.gz
-cd cmake-2.8.11.2
+tar xzf cmake-2.8.12.tar.gz
+cd cmake-2.8.12
 ./configure
 make &&  make install
 cd ..
-tar zxf mysql-5.6.13.tar.gz
-cd mysql-5.6.13
+tar zxf mysql-5.6.14.tar.gz
+cd mysql-5.6.14
 cmake . -DCMAKE_INSTALL_PREFIX=$db_install_dir \
 -DMYSQL_UNIX_ADDR=/tmp/mysql.sock \
 -DMYSQL_DATADIR=$db_data_dir \
@@ -246,13 +246,13 @@ function Install_MariaDB()
 cd /root/lamp/source
 useradd -M -s /sbin/nologin mysql
 mkdir -p $db_data_dir;chown mysql.mysql -R $db_data_dir
-tar xzf cmake-2.8.11.2.tar.gz
-cd cmake-2.8.11.2
+tar xzf cmake-2.8.12.tar.gz
+cd cmake-2.8.12
 ./configure
 make &&  make install
 cd ..
-tar zxf mariadb-5.5.32.tar.gz
-cd mariadb-5.5.32
+tar zxf mariadb-5.5.33a.tar.gz
+cd mariadb-5.5.33a
 cmake . -DCMAKE_INSTALL_PREFIX=$db_install_dir \
 -DMYSQL_UNIX_ADDR=/tmp/mysql.sock \
 -DMYSQL_DATADIR=$db_data_dir \
@@ -464,8 +464,8 @@ cd mhash-0.9.9.9
 make && make install
 cd ../
 
-tar xzf ImageMagick-6.8.6-10.tar.gz
-cd ImageMagick-6.8.6-10
+tar xzf ImageMagick-6.8.7-3.tar.gz
+cd ImageMagick-6.8.7-3
 ./configure
 make && make install
 cd ../
@@ -495,8 +495,8 @@ cd mcrypt-2.6.8
 make && make install
 cd ../
 
-tar xzf php-5.5.3.tar.gz
-cd php-5.5.3
+tar xzf php-5.5.5.tar.gz
+cd php-5.5.5
 ./configure  --prefix=/usr/local/php --with-apxs2=/usr/local/apache/bin/apxs \
 --with-config-file-path=/usr/local/php/etc --enable-opcache --with-mysql=$db_install_dir \
 --with-mysqli=$db_install_dir/bin/mysql_config --with-pdo-mysql --disable-fileinfo \
@@ -521,8 +521,8 @@ fi
 /bin/cp php.ini-production /usr/local/php/etc/php.ini
 cd ..
 
-tar xzf imagick-3.1.0RC2.tgz
-cd imagick-3.1.0RC2
+tar xzf imagick-3.1.2.tgz
+cd imagick-3.1.2
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 /usr/local/php/bin/phpize
 ./configure --with-php-config=/usr/local/php/bin/php-config
@@ -635,8 +635,8 @@ mv ftp $home_dir/default
 function Install_phpMyAdmin()
 { 
 cd $home_dir/default
-tar xzf /root/lamp/source/phpMyAdmin-4.0.5-all-languages.tar.gz
-mv phpMyAdmin-4.0.5-all-languages phpMyAdmin
+tar xzf /root/lamp/source/phpMyAdmin-4.0.8-all-languages.tar.gz
+mv phpMyAdmin-4.0.8-all-languages phpMyAdmin
 }
 
 function TEST()
