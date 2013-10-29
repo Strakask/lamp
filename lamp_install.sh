@@ -422,6 +422,7 @@ cat > /usr/local/apache/conf/vhost/admin.conf << EOF
 <Directory "$home_dir/default">
     SetOutputFilter DEFLATE
     Options FollowSymLinks
+    Require all granted
     AllowOverride All
     Order allow,deny
     Allow from all

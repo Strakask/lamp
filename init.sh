@@ -47,18 +47,17 @@ sed -i 's/^SELINUX=.*$/SELINUX=disabled/' /etc/selinux/config
 sed -i 's/^id:.*$/id:3:initdefault:/' /etc/inittab
 /sbin/init q
 # PS1
-echo 'PS1="\[\e[37;40m\][\[\e[32;40m\]\u\[\e[37;40m\]@\h \[\e[35;40m\]\W\[\e[0m\]]\\$ \[\e[33;40m\]"' >> /etc/profile
+[ -z "`cat ~/.bashrc | grep ^PS1`" ] && echo 'PS1="\[\e[37;40m\][\[\e[32;40m\]\u\[\e[37;40m\]@\h \[\e[35;40m\]\W\[\e[0m\]]\\$ \[\e[33;40m\]"' >> ~/.bashrc
 
 # Record command
 sed -i 's/^HISTSIZE=.*$/HISTSIZE=100/' /etc/profile
-echo "export PROMPT_COMMAND='{ msg=\$(history 1 | { read x y; echo \$y; });user=\$(whoami); echo \$(date \"+%Y-%m-%d %H:%M:%S\"):\$user:\`pwd\`/:\$msg ---- \$(who am i); } >> /tmp/\`hostname\`.\`whoami\`.history-timestamp'" >> /root/.bash_profile
+[ -z "`cat ~/.bashrc | grep history-timestamp`" ] && echo "export PROMPT_COMMAND='{ msg=\$(history 1 | { read x y; echo \$y; });user=\$(whoami); echo \$(date \"+%Y-%m-%d %H:%M:%S\"):\$user:\`pwd\`/:\$msg ---- \$(who am i); } >> /tmp/\`hostname\`.\`whoami\`.history-timestamp'" >> ~/.bashrc
 
 # Wrong password five times locked 180s
-sed -i '4a auth        required      pam_tally2.so deny=5 unlock_time=180' /etc/pam.d/system-auth
+[ -z "`cat /etc/pam.d/system-auth | grep 'pam_tally2.so'`" ] && sed -i '4a auth        required      pam_tally2.so deny=5 unlock_time=180' /etc/pam.d/system-auth
 
 # alias vi
-sed "s@alias mv=.*@alias mv='mv -i'\nalias vi=vim@" /root/.bashrc
-echo 'syntax on' >> /etc/vimrc
+[ -z "`cat ~/.bashrc | grep 'alias vi='`" ] && sed -i "s@alias mv=\(.*\)@alias mv=\1\nalias vi=vim@" ~/.bashrc && echo 'syntax on' >> /etc/vimrc
 
 # /etc/security/limits.conf
 cat >> /etc/security/limits.conf <<EOF
@@ -126,36 +125,40 @@ EOF
 source /etc/profile
 
 ###install tmux
-mkdir tmux
-cd tmux
-wget -c http://cloud.github.com/downloads/libevent/libevent/libevent-2.0.21-stable.tar.gz 
-wget -c http://downloads.sourceforge.net/project/tmux/tmux/tmux-1.8/tmux-1.8.tar.gz 
-tar xzf libevent-2.0.21-stable.tar.gz
-cd libevent-2.0.21-stable
-./configure
-make && make install
-cd ../
+if [ ! -e "`which tmux`" ];then
+	mkdir tmux
+	cd tmux
+	wget -c http://cloud.github.com/downloads/libevent/libevent/libevent-2.0.21-stable.tar.gz 
+	wget -c http://downloads.sourceforge.net/project/tmux/tmux/tmux-1.8/tmux-1.8.tar.gz 
+	tar xzf libevent-2.0.21-stable.tar.gz
+	cd libevent-2.0.21-stable
+	./configure
+	make && make install
+	cd ../
 
-tar xzf tmux-1.8.tar.gz
-cd tmux-1.8
-CFLAGS="-I/usr/local/include" LDFLAGS="-L//usr/local/lib" ./configure
-make && make install
-cd ../../
-rm -rf tmux
+	tar xzf tmux-1.8.tar.gz
+	cd tmux-1.8
+	CFLAGS="-I/usr/local/include" LDFLAGS="-L//usr/local/lib" ./configure
+	make && make install
+	cd ../../
+	rm -rf tmux
 
-if [ `getconf WORD_BIT` == 32 ] && [ `getconf LONG_BIT` == 64 ];then
-    ln -s /usr/local/lib/libevent-2.0.so.5 /usr/lib64/libevent-2.0.so.5
-else
-    ln -s /usr/local/lib/libevent-2.0.so.5 /usr/lib/libevent-2.0.so.5
+	if [ `getconf WORD_BIT` == 32 ] && [ `getconf LONG_BIT` == 64 ];then
+		ln -s /usr/local/lib/libevent-2.0.so.5 /usr/lib64/libevent-2.0.so.5
+	else
+		ln -s /usr/local/lib/libevent-2.0.so.5 /usr/lib/libevent-2.0.so.5
+	fi
 fi
 
 ###install htop
-mkdir htop
-cd htop
-wget -c http://downloads.sourceforge.net/project/htop/htop/1.0.2/htop-1.0.2.tar.gz 
-tar xzf htop-1.0.2.tar.gz
-cd htop-1.0.2
-./configure
-make && make install
-cd ../../
-rm -rf htop
+if [ ! -e "`which htop`" ];then
+	mkdir htop
+	cd htop
+	wget -c http://downloads.sourceforge.net/project/htop/htop/1.0.2/htop-1.0.2.tar.gz 
+	tar xzf htop-1.0.2.tar.gz
+	cd htop-1.0.2
+	./configure
+	make && make install
+	cd ../../
+	rm -rf htop
+fi

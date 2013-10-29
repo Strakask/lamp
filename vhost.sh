@@ -88,6 +88,7 @@ cat >/usr/local/apache/conf/vhost/$domain.conf<<EOF
 <Directory "$vhostdir">
     SetOutputFilter DEFLATE
     Options FollowSymLinks
+    Require all granted
     AllowOverride All
     Order allow,deny
     Allow from all
