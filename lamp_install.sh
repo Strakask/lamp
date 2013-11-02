@@ -107,7 +107,7 @@ cd /root/lamp/source
 [ -s php-5.5.5.tar.gz ] && echo 'php-5.5.5.tar.gz found' || wget -c http://kr1.php.net/distributions/php-5.5.5.tar.gz
 [ -s memcached-1.4.15.tar.gz ] && echo 'memcached-1.4.15.tar.gz found' || wget -c --no-check-certificate https://memcached.googlecode.com/files/memcached-1.4.15.tar.gz
 [ -s memcache-2.2.7.tgz ] && echo 'memcache-2.2.7.tgz found' || wget -c http://pecl.php.net/get/memcache-2.2.7.tgz
-[ -s ImageMagick-6.8.7-3.tar.gz ] && echo 'ImageMagick-6.8.7-3.tar.gz found' || wget -c http://www.imagemagick.org/download/ImageMagick-6.8.7-3.tar.gz 
+[ -s ImageMagick-6.8.7-4.tar.gz ] && echo 'ImageMagick-6.8.7-4.tar.gz found' || wget -c http://blog.linuxeye.com/lnmp/src/ImageMagick-6.8.7-4.tar.gz 
 [ -s imagick-3.1.2.tgz ] && echo 'imagick-3.1.2.tgz found' || wget -c http://pecl.php.net/get/imagick-3.1.2.tgz 
 [ -s pecl_http-1.7.6.tgz ] && echo 'pecl_http-1.7.6.tgz found' || wget -c http://pecl.php.net/get/pecl_http-1.7.6.tgz
 [ -s pcre-8.33.tar.gz ] && echo 'pcre-8.33.tar.gz found' || wget -c http://ftp.cs.stanford.edu/pub/exim/pcre/pcre-8.33.tar.gz 
@@ -465,8 +465,8 @@ cd mhash-0.9.9.9
 make && make install
 cd ../
 
-tar xzf ImageMagick-6.8.7-3.tar.gz
-cd ImageMagick-6.8.7-3
+tar xzf ImageMagick-6.8.7-4.tar.gz
+cd ImageMagick-6.8.7-4
 ./configure
 make && make install
 cd ../
