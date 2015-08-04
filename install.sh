@@ -24,6 +24,8 @@ sed -i "s@^oneinstack_dir.*@oneinstack_dir=`pwd`@" ./options.conf
 . ./options.conf
 . ./include/color.sh
 . ./include/check_os.sh
+. ./include/check_db.sh
+. ./include/check_web.sh
 . ./include/download.sh
 . ./include/get_char.sh
 
@@ -79,7 +81,7 @@ do
         echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
     else
         if [ "$Web_yn" == 'y' ];then
-            [ -d "$web_install_dir/conf" ] && { echo "${CWARNING}The web service already installed! ${CEND}" ; Web_yn=Other ; break ; }
+            # Nginx/Tegine
             #while :
             #do
             #    echo
@@ -92,111 +94,117 @@ do
             #    if [ $Nginx_version != 1 -a $Nginx_version != 2 -a $Nginx_version != 3 ];then
             #        echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
             #    else
-            	    while :
-            	    do
-                        echo
-                        echo 'Please select Apache server:'
-                        echo -e "\t${CMSG}1${CEND}. Install Apache-2.4"
-                        echo -e "\t${CMSG}2${CEND}. Install Apache-2.2"
-                        echo -e "\t${CMSG}3${CEND}. Do not install"
-                        read -p "Please input a number:(Default 3 press Enter) " Apache_version
-                        [ -z "$Apache_version" ] && Apache_version=3
-                        if [ $Apache_version != 1 -a $Apache_version != 2 -a $Apache_version != 3 ];then
-                            echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
-                        else
-                            break
-                        fi
-            	    done
-            #        while :
-            #        do
-            #            echo
-            #            echo 'Please select tomcat server:'
-            #            echo -e "\t${CMSG}1${CEND}. Install Tomcat-8"
-            #            echo -e "\t${CMSG}2${CEND}. Install Tomcat-7"
-            #            echo -e "\t${CMSG}3${CEND}. Do not install"
-            #            read -p "Please input a number:(Default 3 press Enter) " Tomcat_version
-            #            [ -z "$Tomcat_version" ] && Tomcat_version=3
-            #            if [ $Tomcat_version != 1 -a $Tomcat_version != 2 -a $Tomcat_version != 3 ];then
-            #                echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
-            #            else
-            #                if [ "$Tomcat_version" == '1' ];then
-            #                    while :
-            #                    do
-            #                        echo
-            #                        echo 'Please select JDK version:'
-            #                        echo -e "\t${CMSG}1${CEND}. Install JDK-1.8"
-            #                        echo -e "\t${CMSG}2${CEND}. Install JDK-1.7"
-            #                        read -p "Please input a number:(Default 2 press Enter) " JDK_version
-            #                        [ -z "$JDK_version" ] && JDK_version=2
-            #                        if [ $JDK_version != 1 -a $JDK_version != 2 ];then
-            #                            echo "${CWARNING}input error! Please only input number 1,2${CEND}"
-            #                        else
-            #                            break
-            #                        fi
-            #                    done
+            #        [ -e "$nginx_install_dir/sbin/nginx" ] && { echo "${CWARNING}Nginx already installed! ${CEND}"; Nginx_version=Other; }
+            #        [ -e "$tengine_install_dir/sbin/nginx" ] && { echo "${CWARNING}Tengine already installed! ${CEND}"; Nginx_version=Other; }
+            #        break
+            #    fi
+            #done
+            # Apache
+            while :
+            do
+                echo
+                echo 'Please select Apache server:'
+                echo -e "\t${CMSG}1${CEND}. Install Apache-2.4"
+                echo -e "\t${CMSG}2${CEND}. Install Apache-2.2"
+                echo -e "\t${CMSG}3${CEND}. Do not install"
+                read -p "Please input a number:(Default 3 press Enter) " Apache_version
+                [ -z "$Apache_version" ] && Apache_version=3
+                if [ $Apache_version != 1 -a $Apache_version != 2 -a $Apache_version != 3 ];then
+                    echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
+                else
+                    [ -e "$apache_install_dir/conf/httpd.conf" ] && { echo "${CWARNING}Aapche already installed! ${CEND}"; Apache_version=Other; }  
+                    break
+                fi
+            done
+            # Tomcat
+            #while :
+            #do
+            #    echo
+            #    echo 'Please select tomcat server:'
+            #    echo -e "\t${CMSG}1${CEND}. Install Tomcat-8"
+            #    echo -e "\t${CMSG}2${CEND}. Install Tomcat-7"
+            #    echo -e "\t${CMSG}3${CEND}. Do not install"
+            #    read -p "Please input a number:(Default 3 press Enter) " Tomcat_version
+            #    [ -z "$Tomcat_version" ] && Tomcat_version=3
+            #    if [ $Tomcat_version != 1 -a $Tomcat_version != 2 -a $Tomcat_version != 3 ];then
+            #        echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
+            #    else
+            #        [ "$Tomcat_version" != '3' -a -e "$tomcat_install_dir/conf/server.xml" ] && { echo "${CWARNING}Tomcat already installed! ${CEND}" ; Tomcat_version=Other; }  
+            #        if [ "$Tomcat_version" == '1' ];then
+            #            while :
+            #            do
+            #                echo
+            #                echo 'Please select JDK version:'
+            #                echo -e "\t${CMSG}1${CEND}. Install JDK-1.8"
+            #                echo -e "\t${CMSG}2${CEND}. Install JDK-1.7"
+            #                read -p "Please input a number:(Default 2 press Enter) " JDK_version
+            #                [ -z "$JDK_version" ] && JDK_version=2
+            #                if [ $JDK_version != 1 -a $JDK_version != 2 ];then
+            #                    echo "${CWARNING}input error! Please only input number 1,2${CEND}"
+            #                else
+            #                    break
             #                fi
-            #                if [ "$Tomcat_version" == '2' ];then
-            #                    while :
-            #                    do
-            #                        echo
-            #                        echo 'Please select JDK version:'
-            #                        echo -e "\t${CMSG}1${CEND}. Install JDK-1.8"
-            #                        echo -e "\t${CMSG}2${CEND}. Install JDK-1.7"
-            #                        echo -e "\t${CMSG}3${CEND}. Install JDK-1.6"
-            #                        read -p "Please input a number:(Default 2 press Enter) " JDK_version
-            #                        [ -z "$JDK_version" ] && JDK_version=2
-            #                        if [ $JDK_version != 1 -a $JDK_version != 2 -a $JDK_version != 3 ];then
-            #                            echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
-            #                        else
-            #                            break
-            #                        fi
-            #                    done
+            #            done
+            #        fi
+            #        if [ "$Tomcat_version" == '2' ];then
+            #            while :
+            #            do
+            #                echo
+            #                echo 'Please select JDK version:'
+            #                echo -e "\t${CMSG}1${CEND}. Install JDK-1.8"
+            #                echo -e "\t${CMSG}2${CEND}. Install JDK-1.7"
+            #                echo -e "\t${CMSG}3${CEND}. Install JDK-1.6"
+            #                read -p "Please input a number:(Default 2 press Enter) " JDK_version
+            #                [ -z "$JDK_version" ] && JDK_version=2
+            #                if [ $JDK_version != 1 -a $JDK_version != 2 -a $JDK_version != 3 ];then
+            #                    echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
+            #                else
+            #                    break
             #                fi
-            #                break
-            #            fi
-            #        done
+            #            done
+            #        fi
             #        break
             #    fi
             #done
         fi
-        break
+        brea#k
     fi
 done
 
-# choice database
+# choice dat#abase
 while :
 do
     echo
-    read -p "Do you want to install Database? [y/n]: " DB_yn
-    if [ "$DB_yn" != 'y' -a "$DB_yn" != 'n' ];then
-        echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+    read -p #"Do you want to install Database? [y/n]: " DB_yn
+    if [ "$D#B_yn" != 'y' -a "$DB_yn" != 'n' ];then
+        echo# "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
     else
-        if [ "$DB_yn" == 'y' ];then
-            [ -d "$db_install_dir/support-files" ] && { echo "${CWARNING}The database already installed! ${CEND}" ; DB_yn=Other ; break ; }
-            while :
-            do
-                echo
-                echo 'Please select a version of the Database:'
-                echo -e "\t${CMSG}1${CEND}. Install MySQL-5.6"
-                echo -e "\t${CMSG}2${CEND}. Install MySQL-5.5"
-                echo -e "\t${CMSG}3${CEND}. Install MariaDB-10.0"
-                echo -e "\t${CMSG}4${CEND}. Install MariaDB-5.5"
-                echo -e "\t${CMSG}5${CEND}. Install Percona-5.6"
-                echo -e "\t${CMSG}6${CEND}. Install Percona-5.5"
-                read -p "Please input a number:(Default 1 press Enter) " DB_version
-                [ -z "$DB_version" ] && DB_version=1
-                if [ $DB_version != 1 -a $DB_version != 2 -a $DB_version != 3 -a $DB_version != 4 -a $DB_version != 5 -a $DB_version != 6 ];then
-                    echo "${CWARNING}input error! Please only input number 1,2,3,4,5,6 ${CEND}"
-                else
-                    while :
-                    do
-                        read -p "Please input the root password of database: " dbrootpwd
-                        [ -n "`echo $dbrootpwd | grep '[+|&]'`" ] && { echo "${CWARNING}input error,not contain a plus sign (+) and & ${CEND}"; continue; }
-                        (( ${#dbrootpwd} >= 5 )) && sed -i "s+^dbrootpwd.*+dbrootpwd='$dbrootpwd'+" ./options.conf && break || echo "${CWARNING}database root password least 5 characters! ${CEND}"
-                    done
-                    break
-                fi
-            done
+        if [# "$DB_yn" == 'y' ];then
+            #[ -d "$db_install_dir/support-files" ] && { echo "${CWARNING}Database already installed! ${CEND}"; DB_yn=Other; break; }
+            #while :
+            #do
+            #    echo
+            #    echo 'Please select a version of the Database:'
+            #    echo -e "\t${CMSG}1${CEND}. Install MySQL-5.6"
+            #    echo -e "\t${CMSG}2${CEND}. Install MySQL-5.5"
+            #    echo -e "\t${CMSG}3${CEND}. Install MariaDB-10.0"
+            #    echo -e "\t${CMSG}4${CEND}. Install MariaDB-5.5"
+            #    echo -e "\t${CMSG}5${CEND}. Install Percona-5.6"
+            #    echo -e "\t${CMSG}6${CEND}. Install Percona-5.5"
+            #    read -p "Please input a number:(Default 1 press Enter) " DB_version
+            #    [ -z "$DB_version" ] && DB_version=1
+            #    if [ $DB_version != 1 -a $DB_version != 2 -a $DB_version != 3 -a $DB_version != 4 -a $DB_version != 5 -a $DB_version != 6 ];then
+            #        echo "${CWARNING}input error! Please only input number 1,2,3,4,5,6 ${CEND}"
+            #    else
+            #        while :
+            #        do
+            #            read -p "Please input the root password of database: " dbrootpwd
+            #            [ -n "`echo $dbrootpwd | grep '[+|&]'`" ] && { echo "${CWARNING}input error,not contain a plus sign (+) and & ${CEND}"; continue; }
+            #            (( ${#dbrootpwd} >= 5 )) && sed -i "s+^dbrootpwd.*+dbrootpwd='$dbrootpwd'+" ./options.conf && break || echo "${CWARNING}database root password least 5 characters! ${CEND}"
+            #        done
+            #        break
+            #    fi
+            #done
         fi
         break
     fi
@@ -211,7 +219,7 @@ do
         echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
     else
         if [ "$PHP_yn" == 'y' ];then
-            [ -e "$php_install_dir/bin/phpize" ] && { echo "${CWARNING}The php already installed! ${CEND}" ; PHP_yn=Other ; break ; }
+            [ -e "$php_install_dir/bin/phpize" ] && { echo "${CWARNING}PHP already installed! ${CEND}"; PHP_yn=Other; break; }
             while :
             do
                 echo
@@ -393,7 +401,7 @@ do
     if [ "$FTP_yn" != 'y' -a "$FTP_yn" != 'n' ];then
         echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
     else
-        [ "$FTP_yn" == 'y' -a -e "$pureftpd_install_dir/sbin/pure-ftpwho" ] && { echo "${CWARNING}The FTP service already installed! ${CEND}" ; FTP_yn=Other ; break ; }
+        [ "$FTP_yn" == 'y' -a -e "$pureftpd_install_dir/sbin/pure-ftpwho" ] && { echo "${CWARNING}Pure-FTPd already installed! ${CEND}"; FTP_yn=Other; }
         break
     fi
 done
@@ -406,9 +414,7 @@ do
     if [ "$phpMyAdmin_yn" != 'y' -a "$phpMyAdmin_yn" != 'n' ];then
         echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
     else
-        if [ "$phpMyAdmin_yn" == 'y' ];then
-            [ -d "$wwwroot_dir/default/phpMyAdmin" ] && echo "${CWARNING}The phpMyAdmin already installed! ${CEND}" && phpMyAdmin_yn=Other && break
-        fi
+        [ "$phpMyAdmin_yn" == 'y' -a -d "$wwwroot_dir/default/phpMyAdmin" ] && { echo "${CWARNING}phpMyAdmin already installed! ${CEND}"; phpMyAdmin_yn=Other; } 
         break
     fi
 done
@@ -422,9 +428,7 @@ if [ "$PHP_version" != '5' ];then
         if [ "$redis_yn" != 'y' -a "$redis_yn" != 'n' ];then
             echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
         else
-            if [ "$redis_yn" == 'y' ];then
-                [ -e "$redis_install_dir/bin/redis-server" ] && { echo "${CWARNING}The redis already installed! ${CEND}" ; redis_yn=Other ; break ; }
-            fi
+            [ "$redis_yn" == 'y' -a -e "$redis_install_dir/bin/redis-server" ] && { echo "${CWARNING}Redis already installed! ${CEND}"; redis_yn=Other; }
             break
         fi
     done
@@ -437,16 +441,14 @@ if [ "$PHP_version" != '5' ];then
         if [ "$memcached_yn" != 'y' -a "$memcached_yn" != 'n' ];then
             echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
         else
-            if [ "$memcached_yn" == 'y' ];then
-                [ -d "$memcached_install_dir/include/memcached" ] && { echo "${CWARNING}The memcached already installed! ${CEND}" ; memcached_yn=Other ; break ; }
-            fi
+            [ "$memcached_yn" == 'y' -a -d "$memcached_install_dir/include/memcached" ] && { echo "${CWARNING}Memcached already installed! ${CEND}"; memcached_yn=Other; }
             break
         fi
     done
 fi
 
 # check jemalloc or tcmalloc 
-if [ "$Web_yn" == 'y' -o "$DB_yn" == 'y' ];then
+if [ "$Nginx_version" == '1' -o "$Nginx_version" == '2' -o "$DB_yn" == 'y' ];then
     while :
     do
         echo
@@ -474,29 +476,30 @@ if [ "$Web_yn" == 'y' -o "$DB_yn" == 'y' ];then
     done
 fi
 
-#while :
-#do
-#    echo
-#    read -p "Do you want to install HHVM? [y/n]: " HHVM_yn
-#    if [ "$HHVM_yn" != 'y' -a "$HHVM_yn" != 'n' ];then
-#        echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
-#    else
-#        if [ "$HHVM_yn" == 'y' ];then
-#            if [ "$OS" == 'CentOS' -a "$OS_BIT" == '64' ] && [ -n "`grep -E ' 7\.| 6\.5| 6\.6| 6\.7' /etc/redhat-release`" ];then
-#                break
-#            else
-#                echo
-#                echo "${CFAILURE}HHVM only support CentOS6.5+ 64bit, CentOS7 64bit! ${CEND}"
-#                echo "Press Ctrl+c to cancel or Press any key to continue..."
-#                char=`get_char`
-#                HHVM_yn=
-#                break
-#            fi
-#        elif [ "$HHVM_yn" == 'n' ];then
-#            break
-#        fi
-#    fi
-#done
+while :
+do
+    echo
+    read -p "Do you want to install HHVM? [y/n]: " HHVM_yn
+    if [ "$HHVM_yn" != 'y' -a "$HHVM_yn" != 'n' ];then
+        echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+    else
+        if [ "$HHVM_yn" == 'y' ];then
+            [ -e "/usr/bin/hhvm" ] && { echo "${CWARNING}HHVM already installed! ${CEND}"; HHVM_yn=Other; }
+            if [ "$OS" == 'CentOS' -a "$OS_BIT" == '64' ] && [ -n "`grep -E ' 7\.| 6\.5| 6\.6| 6\.7' /etc/redhat-release`" ];then
+                break
+            else
+                echo
+                echo "${CFAILURE}HHVM only support CentOS6.5+ 64bit, CentOS7 64bit! ${CEND}"
+                echo "Press Ctrl+c to cancel or Press any key to continue..."
+                char=`get_char`
+                HHVM_yn=
+                break
+            fi
+        else
+            break
+        fi
+    fi
+done
 
 # init
 . ./include/memory.sh
@@ -658,22 +661,24 @@ if [ "$memcached_yn" == 'y' ];then
     Install_memcached 2>&1 | tee -a $oneinstack_dir/install.log
 fi
 
-# get db_install_dir and web_install_dir
-. ./options.conf
-
 # index example
 if [ ! -e "$wwwroot_dir/default/index.html" -a "$Web_yn" == 'y' ];then
     . include/demo.sh
     DEMO 2>&1 | tee -a $oneinstack_dir/install.log 
 fi
 
+# get web_install_dir and db_install_dir
+. include/check_db.sh
+. include/check_web.sh
+
+# HHVM
 if [ "$HHVM_yn" == 'y' ];then
     . include/hhvm_CentOS.sh 
     Install_hhvm_CentOS 2>&1 | tee -a $oneinstack_dir/install.log 
 fi
 
 # Starting DB 
-[ -e "$db_install_dir" -a -z "`ps -ef | grep -v grep | grep mysql`" ] && /etc/init.d/mysqld start
+[ -d "$db_install_dir/support-files" -a -z "`ps -ef | grep -v grep | grep mysql`" ] && /etc/init.d/mysqld start
 
 echo "####################Congratulations########################"
 [ "$Web_yn" == 'y' -a "$Nginx_version" != '3' -a "$Apache_version" == '3' ] && echo -e "\n`printf "%-32s" "Nginx/Tengine install dir":`${CMSG}$web_install_dir${CEND}"
