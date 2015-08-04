@@ -476,30 +476,30 @@ if [ "$Nginx_version" == '1' -o "$Nginx_version" == '2' -o "$DB_yn" == 'y' ];the
     done
 fi
 
-while :
-do
-    echo
-    read -p "Do you want to install HHVM? [y/n]: " HHVM_yn
-    if [ "$HHVM_yn" != 'y' -a "$HHVM_yn" != 'n' ];then
-        echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
-    else
-        if [ "$HHVM_yn" == 'y' ];then
-            [ -e "/usr/bin/hhvm" ] && { echo "${CWARNING}HHVM already installed! ${CEND}"; HHVM_yn=Other; }
-            if [ "$OS" == 'CentOS' -a "$OS_BIT" == '64' ] && [ -n "`grep -E ' 7\.| 6\.5| 6\.6| 6\.7' /etc/redhat-release`" ];then
-                break
-            else
-                echo
-                echo "${CFAILURE}HHVM only support CentOS6.5+ 64bit, CentOS7 64bit! ${CEND}"
-                echo "Press Ctrl+c to cancel or Press any key to continue..."
-                char=`get_char`
-                HHVM_yn=
-                break
-            fi
-        else
-            break
-        fi
-    fi
-done
+#while :
+#do
+#    echo
+#    read -p "Do you want to install HHVM? [y/n]: " HHVM_yn
+#    if [ "$HHVM_yn" != 'y' -a "$HHVM_yn" != 'n' ];then
+#        echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+#    else
+#        if [ "$HHVM_yn" == 'y' ];then
+#            [ -e "/usr/bin/hhvm" ] && { echo "${CWARNING}HHVM already installed! ${CEND}"; HHVM_yn=Other; }
+#            if [ "$OS" == 'CentOS' -a "$OS_BIT" == '64' ] && [ -n "`grep -E ' 7\.| 6\.5| 6\.6| 6\.7' /etc/redhat-release`" ];then
+#                break
+#            else
+#                echo
+#                echo "${CFAILURE}HHVM only support CentOS6.5+ 64bit, CentOS7 64bit! ${CEND}"
+#                echo "Press Ctrl+c to cancel or Press any key to continue..."
+#                char=`get_char`
+#                HHVM_yn=
+#                break
+#            fi
+#        else
+#            break
+#        fi
+#    fi
+#done
 
 # init
 . ./include/memory.sh
