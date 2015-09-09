@@ -40,17 +40,17 @@ PUBLIC_IPADDR=`./include/get_public_ipaddr.py`
 mkdir -p $wwwroot_dir/default $wwwlogs_dir
 
 # choice upgrade OS
-while :
-do
-    echo
-    read -p "Do you want to upgrade operating system? [y/n]: " upgrade_yn
-    if [ "$upgrade_yn" != 'y' -a "$upgrade_yn" != 'n' ];then
-        echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
-    else
-        [ "$upgrade_yn" == 'y' ] && { echo "${CWARNING}Your system is already upgraded! ${CEND}" ; upgrade_yn=n ; }
-        break
-    fi
-done
+#while :
+#do
+#    echo
+#    read -p "Do you want to upgrade operating system? [y/n]: " upgrade_yn
+#    if [ "$upgrade_yn" != 'y' -a "$upgrade_yn" != 'n' ];then
+#        echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+#    else
+#        #[ "$upgrade_status" == '0' ] && { echo "${CWARNING}Your system is already upgraded! ${CEND}" ; upgrade_yn=Other ; }
+#        break
+#    fi
+#done
 
 # Use default SSH port 22. If you use another SSH port on your server
 [ -z "`grep ^Port /etc/ssh/sshd_config`" ] && ssh_port=22 || ssh_port=`grep ^Port /etc/ssh/sshd_config | awk '{print $2}'`
@@ -62,7 +62,7 @@ do
     if [ $SSH_PORT -eq 22 >/dev/null 2>&1 -o $SSH_PORT -gt 1024 >/dev/null 2>&1 -a $SSH_PORT -lt 65535 >/dev/null 2>&1 ];then
         break
     else
-        echo "${CWARNING}input error! Input range: 22,1024~65535${CEND}"
+        echo "${CWARNING}input error! Input range: 22,1025~65534${CEND}"
     fi
 done
 
@@ -94,8 +94,8 @@ do
             #    if [ $Nginx_version != 1 -a $Nginx_version != 2 -a $Nginx_version != 3 ];then
             #        echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
             #    else
-            #        [ -e "$nginx_install_dir/sbin/nginx" ] && { echo "${CWARNING}Nginx already installed! ${CEND}"; Nginx_version=Other; }
-            #        [ -e "$tengine_install_dir/sbin/nginx" ] && { echo "${CWARNING}Tengine already installed! ${CEND}"; Nginx_version=Other; }
+            #        [ "$Nginx_version" != '3' -a -e "$nginx_install_dir/sbin/nginx" ] && { echo "${CWARNING}Nginx already installed! ${CEND}"; Nginx_version=Other; }
+            #        [ "$Nginx_version" != '3' -a -e "$tengine_install_dir/sbin/nginx" ] && { echo "${CWARNING}Tengine already installed! ${CEND}"; Nginx_version=Other; }
             #        break
             #    fi
             #done
@@ -112,7 +112,7 @@ do
                 if [ $Apache_version != 1 -a $Apache_version != 2 -a $Apache_version != 3 ];then
                     echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
                 else
-                    [ -e "$apache_install_dir/conf/httpd.conf" ] && { echo "${CWARNING}Aapche already installed! ${CEND}"; Apache_version=Other; }  
+                    [ "$Apache_version" != '3' -a -e "$apache_install_dir/conf/httpd.conf" ] && { echo "${CWARNING}Aapche already installed! ${CEND}"; Apache_version=Other; }  
                     break
                 fi
             done
@@ -167,44 +167,44 @@ do
             #    fi
             #done
         fi
-        brea#k
+        break
     fi
 done
 
-# choice dat#abase
+# choice database
 while :
 do
     echo
-    read -p #"Do you want to install Database? [y/n]: " DB_yn
-    if [ "$D#B_yn" != 'y' -a "$DB_yn" != 'n' ];then
-        echo# "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+    read -p "Do you want to install Database? [y/n]: " DB_yn
+    if [ "$DB_yn" != 'y' -a "$DB_yn" != 'n' ];then
+        echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
     else
-        if [# "$DB_yn" == 'y' ];then
-            #[ -d "$db_install_dir/support-files" ] && { echo "${CWARNING}Database already installed! ${CEND}"; DB_yn=Other; break; }
-            #while :
-            #do
-            #    echo
-            #    echo 'Please select a version of the Database:'
-            #    echo -e "\t${CMSG}1${CEND}. Install MySQL-5.6"
-            #    echo -e "\t${CMSG}2${CEND}. Install MySQL-5.5"
-            #    echo -e "\t${CMSG}3${CEND}. Install MariaDB-10.0"
-            #    echo -e "\t${CMSG}4${CEND}. Install MariaDB-5.5"
-            #    echo -e "\t${CMSG}5${CEND}. Install Percona-5.6"
-            #    echo -e "\t${CMSG}6${CEND}. Install Percona-5.5"
-            #    read -p "Please input a number:(Default 1 press Enter) " DB_version
-            #    [ -z "$DB_version" ] && DB_version=1
-            #    if [ $DB_version != 1 -a $DB_version != 2 -a $DB_version != 3 -a $DB_version != 4 -a $DB_version != 5 -a $DB_version != 6 ];then
-            #        echo "${CWARNING}input error! Please only input number 1,2,3,4,5,6 ${CEND}"
-            #    else
-            #        while :
-            #        do
-            #            read -p "Please input the root password of database: " dbrootpwd
-            #            [ -n "`echo $dbrootpwd | grep '[+|&]'`" ] && { echo "${CWARNING}input error,not contain a plus sign (+) and & ${CEND}"; continue; }
-            #            (( ${#dbrootpwd} >= 5 )) && sed -i "s+^dbrootpwd.*+dbrootpwd='$dbrootpwd'+" ./options.conf && break || echo "${CWARNING}database root password least 5 characters! ${CEND}"
-            #        done
-            #        break
-            #    fi
-            #done
+        if [ "$DB_yn" == 'y' ];then
+            [ -d "$db_install_dir/support-files" ] && { echo "${CWARNING}Database already installed! ${CEND}"; DB_yn=Other; break; }
+            while :
+            do
+                echo
+                echo 'Please select a version of the Database:'
+                echo -e "\t${CMSG}1${CEND}. Install MySQL-5.6"
+                echo -e "\t${CMSG}2${CEND}. Install MySQL-5.5"
+                echo -e "\t${CMSG}3${CEND}. Install MariaDB-10.0"
+                echo -e "\t${CMSG}4${CEND}. Install MariaDB-5.5"
+                echo -e "\t${CMSG}5${CEND}. Install Percona-5.6"
+                echo -e "\t${CMSG}6${CEND}. Install Percona-5.5"
+                read -p "Please input a number:(Default 1 press Enter) " DB_version
+                [ -z "$DB_version" ] && DB_version=1
+                if [ $DB_version != 1 -a $DB_version != 2 -a $DB_version != 3 -a $DB_version != 4 -a $DB_version != 5 -a $DB_version != 6 ];then
+                    echo "${CWARNING}input error! Please only input number 1,2,3,4,5,6 ${CEND}"
+                else
+                    while :
+                    do
+                        read -p "Please input the root password of database: " dbrootpwd
+                        [ -n "`echo $dbrootpwd | grep '[+|&]'`" ] && { echo "${CWARNING}input error,not contain a plus sign (+) and & ${CEND}"; continue; }
+                        (( ${#dbrootpwd} >= 5 )) && sed -i "s+^dbrootpwd.*+dbrootpwd='$dbrootpwd'+" ./options.conf && break || echo "${CWARNING}database root password least 5 characters! ${CEND}"
+                    done
+                    break
+                fi
+            done
         fi
         break
     fi
@@ -228,9 +228,9 @@ do
                 echo -e "\t${CMSG}2${CEND}. Install php-5.4"
                 echo -e "\t${CMSG}3${CEND}. Install php-5.5"
                 echo -e "\t${CMSG}4${CEND}. Install php-5.6"
-                echo -e "\t${CMSG}5${CEND}. Install php-7/phpng(beta)"
-                read -p "Please input a number:(Default 1 press Enter) " PHP_version
-                [ -z "$PHP_version" ] && PHP_version=1
+                echo -e "\t${CMSG}5${CEND}. Install php-7/phpng(RC)"
+                read -p "Please input a number:(Default 3 press Enter) " PHP_version
+                [ -z "$PHP_version" ] && PHP_version=3
                 if [ $PHP_version != 1 -a $PHP_version != 2 -a $PHP_version != 3 -a $PHP_version != 4 -a $PHP_version != 5 ];then
                     echo "${CWARNING}input error! Please only input number 1,2,3,4,5${CEND}"
                 else
@@ -312,7 +312,7 @@ do
                                     do
                                         echo 'Please select a opcode cache of the PHP:'
                                         echo -e "\t${CMSG}1${CEND}. Install Zend OPcache"
-                                        read "Please input a number:(Default 1 press Enter) " PHP_cache
+                                        read -p "Please input a number:(Default 1 press Enter) " PHP_cache
                                         [ -z "$PHP_cache" ] && PHP_cache=1
                                         if [ $PHP_cache != 1 ];then
                                             echo "${CWARNING}input error! Please only input number 1${CEND}"
@@ -484,20 +484,18 @@ fi
 #        echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
 #    else
 #        if [ "$HHVM_yn" == 'y' ];then
-#            [ -e "/usr/bin/hhvm" ] && { echo "${CWARNING}HHVM already installed! ${CEND}"; HHVM_yn=Other; }
+#            [ -e "/usr/bin/hhvm" ] && { echo "${CWARNING}HHVM already installed! ${CEND}"; HHVM_yn=Other; break; }
 #            if [ "$OS" == 'CentOS' -a "$OS_BIT" == '64' ] && [ -n "`grep -E ' 7\.| 6\.5| 6\.6| 6\.7' /etc/redhat-release`" ];then
 #                break
 #            else
 #                echo
-#                echo "${CFAILURE}HHVM only support CentOS6.5+ 64bit, CentOS7 64bit! ${CEND}"
+#                echo "${CWARNING}HHVM only support CentOS6.5+ 64bit, CentOS7 64bit! ${CEND}"
 #                echo "Press Ctrl+c to cancel or Press any key to continue..."
 #                char=`get_char`
-#                HHVM_yn=
-#                break
+#                HHVM_yn=Other
 #            fi
-#        else
-#            break
 #        fi
+#        break
 #    fi
 #done
 
@@ -711,9 +709,9 @@ do
         echo "${CMSG}Please restart the server and see if the services start up fine.${CEND}"
         read -p "Do you want to restart OS ? [y/n]: " restart_yn
         if [ "$restart_yn" != 'y' -a "$restart_yn" != 'n' ];then
-		echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+            echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
         else
-                break
+            break
         fi
 done
 [ "$restart_yn" == 'y' ] && reboot

@@ -62,6 +62,7 @@ OS_command
 cd ..
 
 # my.cf
+[ -d "/etc/mysql" ] && /bin/mv /etc/mysql{,_bk}
 cat > /etc/my.cnf << EOF
 [client]
 port = 3306
@@ -202,7 +203,7 @@ $mysql_install_dir/bin/mysql -uroot -p$dbrootpwd -e "delete from mysql.proxies_p
 $mysql_install_dir/bin/mysql -uroot -p$dbrootpwd -e "drop database test;"
 $mysql_install_dir/bin/mysql -uroot -p$dbrootpwd -e "reset master;"
 rm -rf /etc/ld.so.conf.d/{mysql,mariadb,percona}*.conf
-echo "$mysql_install_dir/lib" > mysql.conf 
+echo "$mysql_install_dir/lib" > /etc/ld.so.conf.d/mysql.conf 
 ldconfig
 service mysqld stop
 }

@@ -13,9 +13,8 @@ Install_tomcat-8()
 cd $oneinstack_dir/src
 . /etc/profile
 
-[ "$IPADDR_STATE"x == "CN"x ] && DOWN_ADDR=http://mirrors.aliyun.com/apache || DOWN_ADDR=http://www.apache.org/dist
-src_url=$DOWN_ADDR/tomcat/tomcat-8/v$tomcat_8_version/bin/apache-tomcat-$tomcat_8_version.tar.gz && Download_src
-src_url=$DOWN_ADDR/tomcat/tomcat-8/v$tomcat_8_version/bin/extras/catalina-jmx-remote.jar && Download_src
+src_url=http://mirrors.linuxeye.com/apache/tomcat/v$tomcat_8_version/apache-tomcat-$tomcat_8_version.tar.gz && Download_src
+src_url=http://mirrors.linuxeye.com/apache/tomcat/v$tomcat_8_version/catalina-jmx-remote.jar && Download_src
 
 id -u $run_user >/dev/null 2>&1
 [ $? -ne 0 ] && useradd -M -s /bin/bash $run_user || { [ -z "`grep ^$run_user /etc/passwd | grep '/bin/bash'`" ] && usermod -s /bin/bash $run_user; }
@@ -45,8 +44,9 @@ if [ -e "$tomcat_install_dir/conf/server.xml" ];then
     ./configure --with-apr=/usr/bin/apr-1-config
     make && make install
     if [ -d "/usr/local/apr/lib" ];then
+        [ $Mem -le 768 ] && Xms_Mem=`expr $Mem / 3` || Xms_Mem=256
         cat > $tomcat_install_dir/bin/setenv.sh << EOF
-JAVA_OPTS='-server -Xms256m -Xmx`expr $Mem / 2`m'
+JAVA_OPTS='-server -Xms${Xms_Mem}m -Xmx`expr $Mem / 2`m'
 CATALINA_OPTS="-Djava.library.path=/usr/local/apr/lib"
 #  -Djava.rmi.server.hostname=$IPADDR
 #  -Dcom.sun.management.jmxremote.password.file=\$CATALINA_BASE/conf/jmxremote.password
@@ -58,6 +58,28 @@ EOF
         /bin/mv $tomcat_install_dir/conf/server.xml{,_bk} 
         cd $oneinstack_dir/src
         /bin/cp ../config/server.xml $tomcat_install_dir/conf
+        sed -i "s@/usr/local/tomcat@$tomcat_install_dir@" $tomcat_install_dir/conf
+        [ ! -d "$tomcat_install_dir/conf/vhost" ] && mkdir $tomcat_install_dir/conf/vhost
+        cat > $tomcat_install_dir/conf/vhost/localhost.xml << EOF
+<Host name="localhost" appBase="webapps" unpackWARs="true" autoDeploy="true">
+  <Context path="" docBase="$wwwroot_dir/default" debug="0" reloadable="false" crossContext="true"/>
+  <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs" 
+         prefix="localhost_access_log." suffix=".txt" pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+</Host>
+EOF
+        # logrotate tomcat catalina.out
+        cat > /etc/logrotate.d/tomcat << EOF
+$tomcat_install_dir/logs/catalina.out {
+daily
+rotate 5
+missingok
+dateext
+compress
+notifempty
+copytruncate
+}
+EOF
+        [ -z "`grep '<user username="admin" password=' $tomcat_install_dir/conf/tomcat-users.xml`" ] && sed -i "s@^</tomcat-users>@<role rolename=\"admin-gui\"/>\n<role rolename=\"admin-script\"/>\n<role rolename=\"manager-gui\"/>\n<role rolename=\"manager-script\"/>\n<user username=\"admin\" password=\"`cat /dev/urandom | head -1 | md5sum | head -c 10`\" roles=\"admin-gui,admin-script,manager-gui,manager-script\"/>\n</tomcat-users>@" $tomcat_install_dir/conf/tomcat-users.xml
         cat > $tomcat_install_dir/conf/jmxremote.access << EOF
 monitorRole   readonly
 controlRole   readwrite \

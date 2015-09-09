@@ -31,10 +31,6 @@ cd tengine-$tengine_version
 # close debug
 sed -i 's@CFLAGS="$CFLAGS -g"@#CFLAGS="$CFLAGS -g"@' auto/cc/gcc
 
-# make[1]: *** [objs/src/event/ngx_event_openssl.o] Error 1
-sed -i 's@\(.*\)this option allow a potential SSL 2.0 rollback (CAN-2005-2969)\(.*\)@#ifdef SSL_OP_MSIE_SSLV2_RSA_PADDING\n\1this option allow a potential SSL 2.0 rollback (CAN-2005-2969)\2@' src/event/ngx_event_openssl.c
-sed -i 's@\(.*\)SSL_CTX_set_options(ssl->ctx, SSL_OP_MSIE_SSLV2_RSA_PADDING)\(.*\)@\1SSL_CTX_set_options(ssl->ctx, SSL_OP_MSIE_SSLV2_RSA_PADDING)\2\n#endif@' src/event/ngx_event_openssl.c
-
 if [ "$je_tc_malloc" == '1' ];then
     malloc_module='--with-jemalloc'
 elif [ "$je_tc_malloc" == '2' ];then
@@ -76,6 +72,22 @@ if [ "$Apache_version" == '1' -o "$Apache_version" == '2' ];then
 else
     /bin/cp config/nginx.conf $tengine_install_dir/conf/nginx.conf
 fi
+cat > $tengine_install_dir/conf/proxy.conf << EOF
+proxy_connect_timeout 300s;
+proxy_send_timeout 900;
+proxy_read_timeout 900;
+proxy_buffer_size 32k;
+proxy_buffers 4 64k;
+proxy_busy_buffers_size 128k;
+proxy_redirect off;
+proxy_hide_header Vary;
+proxy_set_header Accept-Encoding '';
+proxy_set_header Referer \$http_referer;
+proxy_set_header Cookie \$http_cookie;
+proxy_set_header Host \$host;
+proxy_set_header X-Real-IP \$remote_addr;
+proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+EOF
 sed -i "s@/home/wwwroot/default@$wwwroot_dir/default@" $tengine_install_dir/conf/nginx.conf
 sed -i "s@/home/wwwlogs@$wwwlogs_dir@g" $tengine_install_dir/conf/nginx.conf
 sed -i "s@^user www www@user $run_user $run_user@" $tengine_install_dir/conf/nginx.conf
