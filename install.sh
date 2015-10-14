@@ -53,23 +53,25 @@ mkdir -p $wwwroot_dir/default $wwwlogs_dir
 #done
 
 # Use default SSH port 22. If you use another SSH port on your server
-[ -z "`grep ^Port /etc/ssh/sshd_config`" ] && ssh_port=22 || ssh_port=`grep ^Port /etc/ssh/sshd_config | awk '{print $2}'`
-while :
-do
-    echo
-    read -p "Please input SSH port(Default: $ssh_port): " SSH_PORT 
-    [ -z "$SSH_PORT" ] && SSH_PORT=$ssh_port
-    if [ $SSH_PORT -eq 22 >/dev/null 2>&1 -o $SSH_PORT -gt 1024 >/dev/null 2>&1 -a $SSH_PORT -lt 65535 >/dev/null 2>&1 ];then
-        break
-    else
-        echo "${CWARNING}input error! Input range: 22,1025~65534${CEND}"
+if [ -e "/etc/ssh/sshd_config" ];then
+    [ -z "`grep ^Port /etc/ssh/sshd_config`" ] && ssh_port=22 || ssh_port=`grep ^Port /etc/ssh/sshd_config | awk '{print $2}'`
+    while :
+    do
+        echo
+        read -p "Please input SSH port(Default: $ssh_port): " SSH_PORT 
+        [ -z "$SSH_PORT" ] && SSH_PORT=$ssh_port
+        if [ $SSH_PORT -eq 22 >/dev/null 2>&1 -o $SSH_PORT -gt 1024 >/dev/null 2>&1 -a $SSH_PORT -lt 65535 >/dev/null 2>&1 ];then
+            break
+        else
+            echo "${CWARNING}input error! Input range: 22,1025~65534${CEND}"
+        fi
+    done
+    
+    if [ -z "`grep ^Port /etc/ssh/sshd_config`" -a "$SSH_PORT" != '22' ];then
+        sed -i "s@^#Port.*@&\nPort $SSH_PORT@" /etc/ssh/sshd_config
+    elif [ -n "`grep ^Port /etc/ssh/sshd_config`" ];then
+        sed -i "s@^Port.*@Port $SSH_PORT@" /etc/ssh/sshd_config 
     fi
-done
-
-if [ -z "`grep ^Port /etc/ssh/sshd_config`" -a "$SSH_PORT" != '22' ];then
-    sed -i "s@^#Port.*@&\nPort $SSH_PORT@" /etc/ssh/sshd_config
-elif [ -n "`grep ^Port /etc/ssh/sshd_config`" ];then
-    sed -i "s@^Port.*@Port $SSH_PORT@" /etc/ssh/sshd_config 
 fi
 
 # check Web server
@@ -476,28 +478,28 @@ if [ "$Nginx_version" == '1' -o "$Nginx_version" == '2' -o "$DB_yn" == 'y' ];the
     done
 fi
 
-#while :
-#do
-#    echo
-#    read -p "Do you want to install HHVM? [y/n]: " HHVM_yn
-#    if [ "$HHVM_yn" != 'y' -a "$HHVM_yn" != 'n' ];then
-#        echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
-#    else
-#        if [ "$HHVM_yn" == 'y' ];then
-#            [ -e "/usr/bin/hhvm" ] && { echo "${CWARNING}HHVM already installed! ${CEND}"; HHVM_yn=Other; break; }
-#            if [ "$OS" == 'CentOS' -a "$OS_BIT" == '64' ] && [ -n "`grep -E ' 7\.| 6\.5| 6\.6| 6\.7' /etc/redhat-release`" ];then
-#                break
-#            else
-#                echo
-#                echo "${CWARNING}HHVM only support CentOS6.5+ 64bit, CentOS7 64bit! ${CEND}"
-#                echo "Press Ctrl+c to cancel or Press any key to continue..."
-#                char=`get_char`
-#                HHVM_yn=Other
-#            fi
-#        fi
-#        break
-#    fi
-#done
+while :
+do
+    echo
+    read -p "Do you want to install HHVM? [y/n]: " HHVM_yn
+    if [ "$HHVM_yn" != 'y' -a "$HHVM_yn" != 'n' ];then
+        echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+    else
+        if [ "$HHVM_yn" == 'y' ];then
+            [ -e "/usr/bin/hhvm" ] && { echo "${CWARNING}HHVM already installed! ${CEND}"; HHVM_yn=Other; break; }
+            if [ "$OS" == 'CentOS' -a "$OS_BIT" == '64' ] && [ -n "`grep -E ' 7\.| 6\.5| 6\.6| 6\.7' /etc/redhat-release`" ];then
+                break
+            else
+                echo
+                echo "${CWARNING}HHVM only support CentOS6.5+ 64bit, CentOS7 64bit! ${CEND}"
+                echo "Press Ctrl+c to cancel or Press any key to continue..."
+                char=`get_char`
+                HHVM_yn=Other
+            fi
+        fi
+        break
+    fi
+done
 
 # init
 . ./include/memory.sh

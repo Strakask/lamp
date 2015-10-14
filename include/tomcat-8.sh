@@ -48,17 +48,17 @@ if [ -e "$tomcat_install_dir/conf/server.xml" ];then
         cat > $tomcat_install_dir/bin/setenv.sh << EOF
 JAVA_OPTS='-server -Xms${Xms_Mem}m -Xmx`expr $Mem / 2`m'
 CATALINA_OPTS="-Djava.library.path=/usr/local/apr/lib"
-#  -Djava.rmi.server.hostname=$IPADDR
-#  -Dcom.sun.management.jmxremote.password.file=\$CATALINA_BASE/conf/jmxremote.password
+# -Djava.rmi.server.hostname=$IPADDR
+# -Dcom.sun.management.jmxremote.password.file=\$CATALINA_BASE/conf/jmxremote.password
 # -Dcom.sun.management.jmxremote.access.file=\$CATALINA_BASE/conf/jmxremote.access
-#  -Dcom.sun.management.jmxremote.ssl=false"
+# -Dcom.sun.management.jmxremote.ssl=false"
 EOF
         cd ../../../;rm -rf tomcat-native-*
         chmod +x $tomcat_install_dir/bin/*.sh
         /bin/mv $tomcat_install_dir/conf/server.xml{,_bk} 
         cd $oneinstack_dir/src
         /bin/cp ../config/server.xml $tomcat_install_dir/conf
-        sed -i "s@/usr/local/tomcat@$tomcat_install_dir@" $tomcat_install_dir/conf
+        sed -i "s@/usr/local/tomcat@$tomcat_install_dir@g" $tomcat_install_dir/conf/server.xml
         [ ! -d "$tomcat_install_dir/conf/vhost" ] && mkdir $tomcat_install_dir/conf/vhost
         cat > $tomcat_install_dir/conf/vhost/localhost.xml << EOF
 <Host name="localhost" appBase="webapps" unpackWARs="true" autoDeploy="true">
