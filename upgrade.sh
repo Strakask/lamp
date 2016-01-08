@@ -17,6 +17,8 @@ printf "
 #       For more information please visit http://oneinstack.com       #
 #######################################################################
 "
+# get pwd
+sed -i "s@^oneinstack_dir.*@oneinstack_dir=`pwd`@" ./options.conf
 
 . ./options.conf
 . ./include/color.sh
@@ -63,8 +65,8 @@ What Are You Doing?
 "
     echo
     read -p "Please input the correct option: " Number
-    if [ "$Number" != '1' -a "$Number" != '2' -a "$Number" != '3' -a "$Number" != '4' -a "$Number" != '5' -a "$Number" != 'q' ];then
-        echo "${CWARNING}input error! Please only input 1 ~ 5 and q${CEND}"
+    if [[ ! $Number =~ ^[1-5,q]$ ]];then
+        echo "${CWARNING}input error! Please only input 1,2,3,4,5 and q${CEND}"
     else
         case "$Number" in
         1)

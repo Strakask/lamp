@@ -8,52 +8,66 @@
 #       http://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
-Install_Percona-5-6()
+Install_MySQL-5-7()
 {
 cd $oneinstack_dir/src
-src_url=https://www.percona.com/downloads/Percona-Server-5.6/Percona-Server-$percona_5_6_version/source/tarball/percona-server-$percona_5_6_version.tar.gz && Download_src
 
-id -u mysql >/dev/null 2>&1
-[ $? -ne 0 ] && useradd -M -s /sbin/nologin mysql
+[ "$IPADDR_STATE"x == "CN"x ] && { DOWN_ADDR_MYSQL=http://mirrors.linuxeye.com/oneinstack/src; DOWN_ADDR_BOOST=$DOWN_ADDR_MYSQL; } || { DOWN_ADDR_MYSQL=http://cdn.mysql.com/Downloads/MySQL-5.7; DOWN_ADDR_BOOST=http://downloads.sourceforge.net/project/boost/boost/1.59.0; }
 
-mkdir -p $percona_data_dir;chown mysql.mysql -R $percona_data_dir
-tar zxf percona-server-$percona_5_6_version.tar.gz 
-cd percona-server-$percona_5_6_version 
+if [ ! -e "/usr/local/lib/libboost_system.so" ];then
+    src_url=$DOWN_ADDR_BOOST/boost_1_59_0.tar.gz && Download_src
+    tar xzf boost_1_59_0.tar.gz
+    cd boost_1_59_0
+    ./bootstrap.sh
+    ./bjam --prefix=/usr/local
+    ./b2 install
+    cd ..
+fi
+echo '/usr/local/lib' > /etc/ld.so.conf.d/local.conf
+ldconfig
+
 if [ "$je_tc_malloc" == '1' ];then
     EXE_LINKER="-DCMAKE_EXE_LINKER_FLAGS='-ljemalloc'"
 elif [ "$je_tc_malloc" == '2' ];then
     EXE_LINKER="-DCMAKE_EXE_LINKER_FLAGS='-ltcmalloc'"
 fi
+
+src_url=$DOWN_ADDR_MYSQL/mysql-$mysql_5_7_version.tar.gz && Download_src
+id -u mysql >/dev/null 2>&1
+[ $? -ne 0 ] && useradd -M -s /sbin/nologin mysql
+[ ! -d "$mysql_install_dir" ] && mkdir -p $mysql_install_dir 
+mkdir -p $mysql_data_dir;chown mysql.mysql -R $mysql_data_dir
+tar zxf mysql-$mysql_5_7_version.tar.gz
+cd mysql-$mysql_5_7_version
 make clean
-[ ! -d "$percona_install_dir" ] && mkdir -p $percona_install_dir
-cmake . -DCMAKE_INSTALL_PREFIX=$percona_install_dir \
--DMYSQL_DATADIR=$percona_data_dir \
+cmake . -DCMAKE_INSTALL_PREFIX=$mysql_install_dir \
+-DMYSQL_DATADIR=$mysql_data_dir \
 -DSYSCONFDIR=/etc \
 -DWITH_INNOBASE_STORAGE_ENGINE=1 \
 -DWITH_PARTITION_STORAGE_ENGINE=1 \
 -DWITH_FEDERATED_STORAGE_ENGINE=1 \
 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
 -DWITH_MYISAM_STORAGE_ENGINE=1 \
--DWITH_ARCHIVE_STORAGE_ENGINE=1 \
 -DENABLED_LOCAL_INFILE=1 \
 -DENABLE_DTRACE=0 \
 -DDEFAULT_CHARSET=utf8mb4 \
 -DDEFAULT_COLLATION=utf8mb4_general_ci \
+-DWITH_EMBEDDED_SERVER=1 \
 $EXE_LINKER
 make -j `grep processor /proc/cpuinfo | wc -l` 
 make install
 
-if [ -d "$percona_install_dir/support-files" ];then
-    echo "${CSUCCESS}Percona install successfully! ${CEND}"
+if [ -d "$mysql_install_dir/support-files" ];then
+    echo "${CSUCCESS}MySQL install successfully! ${CEND}"
     cd ..
-    rm -rf percona-server-$percona_5_6_version 
+    rm -rf mysql-$mysql_5_7_version
 else
-    rm -rf $percona_install_dir
-    echo "${CFAILURE}Percona install failed, Please contact the author! ${CEND}"
+    rm -rf $mysql_install_dir
+    echo "${CFAILURE}MySQL install failed, Please contact the author! ${CEND}"
     kill -9 $$
 fi
 
-/bin/cp $percona_install_dir/support-files/mysql.server /etc/init.d/mysqld
+/bin/cp $mysql_install_dir/support-files/mysql.server /etc/init.d/mysqld
 chmod +x /etc/init.d/mysqld
 OS_CentOS='chkconfig --add mysqld \n
 chkconfig mysqld on'
@@ -63,6 +77,7 @@ cd ..
 
 # my.cf
 [ -d "/etc/mysql" ] && /bin/mv /etc/mysql{,_bk}
+[ -e "$mysql_install_dir/my.cnf" ] && rm -rf $mysql_install_dir/my.cnf
 cat > /etc/my.cnf << EOF
 [client]
 port = 3306
@@ -70,16 +85,16 @@ socket = /tmp/mysql.sock
 default-character-set = utf8mb4
 
 [mysql]
-prompt="Percona [\\d]> "
+prompt="MySQL [\\d]> "
 no-auto-rehash
 
 [mysqld]
 port = 3306
 socket = /tmp/mysql.sock
 
-basedir = $percona_install_dir
-datadir = $percona_data_dir
-pid-file = $percona_data_dir/mysql.pid
+basedir = $mysql_install_dir 
+datadir = $mysql_data_dir
+pid-file = $mysql_data_dir/mysql.pid
 user = mysql
 bind-address = 0.0.0.0
 server-id = 1
@@ -118,10 +133,10 @@ log_bin = mysql-bin
 binlog_format = mixed
 expire_logs_days = 7 
 
-log_error = $percona_data_dir/mysql-error.log
+log_error = $mysql_data_dir/mysql-error.log
 slow_query_log = 1
 long_query_time = 1
-slow_query_log_file = $percona_data_dir/mysql-slow.log
+slow_query_log_file = $mysql_data_dir/mysql-slow.log
 
 performance_schema = 0
 explicit_defaults_for_timestamp
@@ -131,6 +146,7 @@ explicit_defaults_for_timestamp
 skip-external-locking
 
 default_storage_engine = InnoDB
+#default-storage-engine = MyISAM
 innodb_file_per_table = 1
 innodb_open_files = 500
 innodb_buffer_pool_size = 64M
@@ -190,24 +206,20 @@ elif [ $Mem -gt 3500 ];then
     sed -i 's@^table_open_cache.*@table_open_cache = 1024@' /etc/my.cnf
 fi
 
-$percona_install_dir/scripts/mysql_install_db --user=mysql --basedir=$percona_install_dir --datadir=$percona_data_dir
+$mysql_install_dir/bin/mysqld --initialize-insecure --user=mysql --basedir=$mysql_install_dir --datadir=$mysql_data_dir
 
-chown mysql.mysql -R $percona_data_dir
+chown mysql.mysql -R $mysql_data_dir
 [ -d '/etc/mysql' ] && mv /etc/mysql{,_bk}
 service mysqld start
-[ -z "`grep ^'export PATH=' /etc/profile`" ] && echo "export PATH=$percona_install_dir/bin:\$PATH" >> /etc/profile 
-[ -n "`grep ^'export PATH=' /etc/profile`" -a -z "`grep $percona_install_dir /etc/profile`" ] && sed -i "s@^export PATH=\(.*\)@export PATH=$percona_install_dir/bin:\1@" /etc/profile
+[ -z "`grep ^'export PATH=' /etc/profile`" ] && echo "export PATH=$mysql_install_dir/bin:\$PATH" >> /etc/profile 
+[ -n "`grep ^'export PATH=' /etc/profile`" -a -z "`grep $mysql_install_dir /etc/profile`" ] && sed -i "s@^export PATH=\(.*\)@export PATH=$mysql_install_dir/bin:\1@" /etc/profile
 . /etc/profile
 
-$percona_install_dir/bin/mysql -e "grant all privileges on *.* to root@'127.0.0.1' identified by \"$dbrootpwd\" with grant option;"
-$percona_install_dir/bin/mysql -e "grant all privileges on *.* to root@'localhost' identified by \"$dbrootpwd\" with grant option;"
-$percona_install_dir/bin/mysql -uroot -p$dbrootpwd -e "delete from mysql.user where Password='';"
-$percona_install_dir/bin/mysql -uroot -p$dbrootpwd -e "delete from mysql.db where User='';"
-$percona_install_dir/bin/mysql -uroot -p$dbrootpwd -e "delete from mysql.proxies_priv where Host!='localhost';"
-$percona_install_dir/bin/mysql -uroot -p$dbrootpwd -e "drop database test;"
-$percona_install_dir/bin/mysql -uroot -p$dbrootpwd -e "reset master;"
+$mysql_install_dir/bin/mysql -e "grant all privileges on *.* to root@'127.0.0.1' identified by \"$dbrootpwd\" with grant option;"
+$mysql_install_dir/bin/mysql -e "grant all privileges on *.* to root@'localhost' identified by \"$dbrootpwd\" with grant option;"
+$mysql_install_dir/bin/mysql -uroot -p$dbrootpwd -e "reset master;"
 rm -rf /etc/ld.so.conf.d/{mysql,mariadb,percona}*.conf
-echo "$percona_install_dir/lib" > /etc/ld.so.conf.d/percona.conf
+echo "$mysql_install_dir/lib" > /etc/ld.so.conf.d/mysql.conf 
 ldconfig
 service mysqld stop
 }

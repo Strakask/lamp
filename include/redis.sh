@@ -8,8 +8,7 @@
 #       http://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
-Install_redis()
-{
+Install_redis-server() {
 cd $oneinstack_dir/src
 src_url=http://download.redis.io/releases/redis-$redis_version.tar.gz && Download_src
 
@@ -31,6 +30,7 @@ if [ -f "src/redis-server" ];then
     sed -i "s@logfile.*@logfile $redis_install_dir/var/redis.log@" $redis_install_dir/etc/redis.conf
     sed -i "s@^dir.*@dir $redis_install_dir/var@" $redis_install_dir/etc/redis.conf
     sed -i 's@daemonize no@daemonize yes@' $redis_install_dir/etc/redis.conf
+    sed -i "s@^# bind 127.0.0.1@bind 127.0.0.1@" $redis_install_dir/etc/redis.conf
     redis_maxmemory=`expr $Mem / 8`000000
     [ -z "`grep ^maxmemory $redis_install_dir/etc/redis.conf`" ] && sed -i "s@maxmemory <bytes>@maxmemory <bytes>\nmaxmemory `expr $Mem / 8`000000@" $redis_install_dir/etc/redis.conf
     echo "${CSUCCESS}Redis-server install successfully! ${CEND}"
@@ -53,24 +53,36 @@ else
     echo "${CFAILURE}Redis-server install failed, Please contact the author! ${CEND}"
     kill -9 $$
 fi
+cd ..
+}
 
+Install_php-redis() {
+cd $oneinstack_dir/src
 if [ -e "$php_install_dir/bin/phpize" ];then
-    src_url=http://pecl.php.net/get/redis-$redis_pecl_version.tgz && Download_src
-    tar xzf redis-$redis_pecl_version.tgz
-    cd redis-$redis_pecl_version
+    if [ "`$php_install_dir/bin/php -r 'echo PHP_VERSION;' | awk -F. '{print $1}'`" == '7' ];then
+        #git clone -b php7 https://github.com/phpredis/phpredis.git
+        #cd phpredis
+        src_url=http://mirrors.linuxeye.com/oneinstack/src/phpredis-php7.tgz && Download_src
+        tar xzf phpredis-php7.tgz
+        cd phpredis-php7
+    else
+        src_url=http://pecl.php.net/get/redis-$redis_pecl_version.tgz && Download_src
+        tar xzf redis-$redis_pecl_version.tgz
+        cd redis-$redis_pecl_version
+    fi
     make clean
     $php_install_dir/bin/phpize
     ./configure --with-php-config=$php_install_dir/bin/php-config
     make && make install
-    if [ -f "$php_install_dir/lib/php/extensions/`ls $php_install_dir/lib/php/extensions | grep zts`/redis.so" ];then
-        [ -z "`cat $php_install_dir/etc/php.ini | grep '^extension_dir'`" ] && sed -i "s@extension_dir = \"ext\"@extension_dir = \"ext\"\nextension_dir = \"$php_install_dir/lib/php/extensions/`ls $php_install_dir/lib/php/extensions  | grep zts`\"@" $php_install_dir/etc/php.ini
-        sed -i 's@^extension_dir\(.*\)@extension_dir\1\nextension = "redis.so"@' $php_install_dir/etc/php.ini
+    if [ -f "`$php_install_dir/bin/php-config --extension-dir`/redis.so" ];then
+        [ -z "`grep '^extension_dir' $php_install_dir/etc/php.ini`" ] && sed -i "s@extension_dir = \"ext\"@extension_dir = \"ext\"\nextension_dir = \"`$php_install_dir/bin/php-config --extension-dir`\"@" $php_install_dir/etc/php.ini
+        [ -z "`grep 'redis.so' $php_install_dir/etc/php.ini`" ] && sed -i 's@^extension_dir\(.*\)@extension_dir\1\nextension = "redis.so"@' $php_install_dir/etc/php.ini
         echo "${CSUCCESS}PHP Redis module install successfully! ${CEND}"
         cd ..
         rm -rf redis-$redis_pecl_version
         [ "$Apache_version" != '1' -a "$Apache_version" != '2' ] && service php-fpm restart || service httpd restart
     else
-        echo "${CFAILURE}PHP Redis install failed, Please contact the author! ${CEND}"
+        echo "${CFAILURE}PHP Redis module install failed, Please contact the author! ${CEND}"
     fi
 fi
 cd ..

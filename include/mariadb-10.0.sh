@@ -18,15 +18,15 @@ LIBC_VERSION=`getconf -a | grep GNU_LIBC_VERSION | awk '{print $NF}'`
 LIBC_YN=`echo "$LIBC_VERSION < 2.14" | bc`
 [ $LIBC_YN == '1' ] && GLIBC_FLAG=linux || GLIBC_FLAG=linux-glibc_214 
 
-src_url=$DOWN_ADDR/mariadb-${mariadb_10_version}/bintar-${GLIBC_FLAG}-$SYS_BIT_a/mariadb-${mariadb_10_version}-${GLIBC_FLAG}-${SYS_BIT_b}.tar.gz && Download_src
+src_url=$DOWN_ADDR/mariadb-${mariadb_10_0_version}/bintar-${GLIBC_FLAG}-$SYS_BIT_a/mariadb-${mariadb_10_0_version}-${GLIBC_FLAG}-${SYS_BIT_b}.tar.gz && Download_src
 
 id -u mysql >/dev/null 2>&1
 [ $? -ne 0 ] && useradd -M -s /sbin/nologin mysql
 
 mkdir -p $mariadb_data_dir;chown mysql.mysql -R $mariadb_data_dir
-tar zxf mariadb-${mariadb_10_version}-${GLIBC_FLAG}-${SYS_BIT_b}.tar.gz 
+tar zxf mariadb-${mariadb_10_0_version}-${GLIBC_FLAG}-${SYS_BIT_b}.tar.gz 
 [ ! -d "$mariadb_install_dir" ] && mkdir -p $mariadb_install_dir
-mv mariadb-${mariadb_10_version}-linux-${SYS_BIT_b}/* $mariadb_install_dir 
+mv mariadb-${mariadb_10_0_version}-*-${SYS_BIT_b}/* $mariadb_install_dir 
 if [ "$je_tc_malloc" == '1' ];then
     sed -i 's@executing mysqld_safe@executing mysqld_safe\nexport LD_PRELOAD=/usr/local/lib/libjemalloc.so@' $mariadb_install_dir/bin/mysqld_safe
 elif [ "$je_tc_malloc" == '2' ];then
@@ -102,7 +102,7 @@ ft_min_word_len = 4
 
 log_bin = mysql-bin
 binlog_format = mixed
-expire_logs_days = 30
+expire_logs_days = 7 
 
 log_error = $mariadb_data_dir/mysql-error.log
 slow_query_log = 1
@@ -116,7 +116,6 @@ performance_schema = 0
 skip-external-locking
 
 default_storage_engine = InnoDB
-#default-storage-engine = MyISAM
 innodb_file_per_table = 1
 innodb_open_files = 500
 innodb_buffer_pool_size = 64M
@@ -179,6 +178,7 @@ fi
 $mariadb_install_dir/scripts/mysql_install_db --user=mysql --basedir=$mariadb_install_dir --datadir=$mariadb_data_dir
 
 chown mysql.mysql -R $mariadb_data_dir
+[ -d '/etc/mysql' ] && mv /etc/mysql{,_bk}
 service mysqld start
 [ -z "`grep ^'export PATH=' /etc/profile`" ] && echo "export PATH=$mariadb_install_dir/bin:\$PATH" >> /etc/profile 
 [ -n "`grep ^'export PATH=' /etc/profile`" -a -z "`grep $mariadb_install_dir /etc/profile`" ] && sed -i "s@^export PATH=\(.*\)@export PATH=$mariadb_install_dir/bin:\1@" /etc/profile

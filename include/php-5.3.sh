@@ -20,10 +20,9 @@ src_url=http://mirrors.linuxeye.com/oneinstack/src/fpm-race-condition.patch && D
 src_url=http://www.php.net/distributions/php-$php_3_version.tar.gz && Download_src
 
 tar xzf libiconv-$libiconv_version.tar.gz
+patch -d libiconv-$libiconv_version -p0 < libiconv-glibc-2.16.patch
 cd libiconv-$libiconv_version
 ./configure --prefix=/usr/local
-[ -n "`cat /etc/issue | grep 'Ubuntu 13'`" ] && sed -i 's@_GL_WARN_ON_USE (gets@//_GL_WARN_ON_USE (gets@' srclib/stdio.h 
-[ -n "`cat /etc/issue | grep 'Ubuntu 14'`" ] && sed -i 's@gets is a security@@' srclib/stdio.h 
 make && make install
 cd ..
 rm -rf libiconv-$libiconv_version
@@ -56,6 +55,8 @@ else \n
 fi'
 OS_command
 
+[ ! -e '/usr/include/freetype2/freetype' ] &&  ln -s /usr/include/freetype2 /usr/include/freetype2/freetype
+
 tar xzf mcrypt-$mcrypt_version.tar.gz
 cd mcrypt-$mcrypt_version
 ldconfig
@@ -73,7 +74,7 @@ cd php-$php_3_version
 patch -p1 < ../php5.3patch 
 make clean
 [ ! -d "$php_install_dir" ] && mkdir -p $php_install_dir
-if [ "$Apache_version" == '1' -o "$Apache_version" == '2' ];then
+if [[ $Apache_version =~ ^[1-2]$ ]];then
     ./configure --prefix=$php_install_dir --with-config-file-path=$php_install_dir/etc \
 --with-apxs2=$apache_install_dir/bin/apxs --disable-fileinfo \
 --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd \
@@ -121,16 +122,13 @@ sed -i 's@^short_open_tag = Off@short_open_tag = On@' $php_install_dir/etc/php.i
 sed -i 's@^expose_php = On@expose_php = Off@' $php_install_dir/etc/php.ini
 sed -i 's@^request_order.*@request_order = "CGP"@' $php_install_dir/etc/php.ini
 sed -i 's@^;date.timezone.*@date.timezone = Asia/Shanghai@' $php_install_dir/etc/php.ini
-sed -i 's@^post_max_size.*@post_max_size = 50M@' $php_install_dir/etc/php.ini
+sed -i 's@^post_max_size.*@post_max_size = 100M@' $php_install_dir/etc/php.ini
 sed -i 's@^upload_max_filesize.*@upload_max_filesize = 50M@' $php_install_dir/etc/php.ini
-sed -i 's@^;upload_tmp_dir.*@upload_tmp_dir = /tmp@' $php_install_dir/etc/php.ini
 sed -i 's@^max_execution_time.*@max_execution_time = 5@' $php_install_dir/etc/php.ini
 sed -i 's@^disable_functions.*@disable_functions = passthru,exec,system,chroot,chgrp,chown,shell_exec,proc_open,proc_get_status,ini_alter,ini_restore,dl,openlog,syslog,readlink,symlink,popepassthru,stream_socket_server,fsocket,popen@' $php_install_dir/etc/php.ini
-sed -i 's@^session.cookie_httponly.*@session.cookie_httponly = 1@' $php_install_dir/etc/php.ini
-sed -i 's@^mysqlnd.collect_memory_statistics.*@mysqlnd.collect_memory_statistics = On@' $php_install_dir/etc/php.ini
 [ -e /usr/sbin/sendmail ] && sed -i 's@^;sendmail_path.*@sendmail_path = /usr/sbin/sendmail -t -i@' $php_install_dir/etc/php.ini
 
-if [ "$Apache_version" != '1' -a "$Apache_version" != '2' ];then
+if [[ ! $Apache_version =~ ^[1-2]$ ]];then
     # php-fpm Init Script
     /bin/cp sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
     chmod +x /etc/init.d/php-fpm
@@ -182,6 +180,7 @@ pm.process_idle_timeout = 10s
 request_terminate_timeout = 120
 request_slowlog_timeout = 0
 
+pm.status_path = /php-fpm_status
 slowlog = log/slow.log
 rlimit_files = 51200
 rlimit_core = 0
@@ -225,7 +224,7 @@ EOF
     #[ "$Web_yn" == 'n' ] && sed -i "s@^listen =.*@listen = $IPADDR:9000@" $php_install_dir/etc/php-fpm.conf 
     service php-fpm start
 
-elif [ "$Apache_version" == '1' -o "$Apache_version" == '2' ];then
+elif [[ $Apache_version =~ ^[1-2]$ ]];then
     service httpd restart
 fi
 cd ..

@@ -11,7 +11,7 @@
 Install_Nginx()
 {
 cd $oneinstack_dir/src
-src_url=http://downloads.sourceforge.net/project/pcre/pcre/$pcre_version/pcre-$pcre_version.tar.gz && Download_src
+src_url=http://mirrors.linuxeye.com/oneinstack/src/pcre-$pcre_version.tar.gz && Download_src
 src_url=http://nginx.org/download/nginx-$nginx_version.tar.gz && Download_src
 
 tar xzf pcre-$pcre_version.tar.gz
@@ -69,10 +69,13 @@ cd ..
 sed -i "s@/usr/local/nginx@$nginx_install_dir@g" /etc/init.d/nginx
 
 mv $nginx_install_dir/conf/nginx.conf{,_bk}
-if [ "$Apache_version" == '1' -o "$Apache_version" == '2' ];then
+if [[ $Apache_version =~ ^[1-2]$ ]];then
     /bin/cp config/nginx_apache.conf $nginx_install_dir/conf/nginx.conf
+elif [[ $Tomcat_version =~ ^[1-2]$ ]] && [ ! -e "$php_install_dir/bin/php" ];then
+    /bin/cp config/nginx_tomcat.conf $nginx_install_dir/conf/nginx.conf
 else
     /bin/cp config/nginx.conf $nginx_install_dir/conf/nginx.conf
+    [ "$PHP_yn" == 'y' ] && [ -z "`grep '/php-fpm_status' $nginx_install_dir/conf/nginx.conf`" ] &&  sed -i "s@index index.html index.php;@index index.html index.php;\n    location ~ /php-fpm_status {\n        #fastcgi_pass remote_php_ip:9000;\n        fastcgi_pass unix:/dev/shm/php-cgi.sock;\n        fastcgi_index index.php;\n        include fastcgi.conf;\n        allow 127.0.0.1;\n        deny all;\n        }@" $nginx_install_dir/conf/nginx.conf
 fi
 cat > $nginx_install_dir/conf/proxy.conf << EOF
 proxy_connect_timeout 300s;
@@ -90,26 +93,10 @@ proxy_set_header Host \$host;
 proxy_set_header X-Real-IP \$remote_addr;
 proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
 EOF
-sed -i "s@/home/wwwroot/default@$wwwroot_dir/default@" $nginx_install_dir/conf/nginx.conf
-sed -i "s@/home/wwwlogs@$wwwlogs_dir@g" $nginx_install_dir/conf/nginx.conf
+sed -i "s@/data/wwwroot/default@$wwwroot_dir/default@" $nginx_install_dir/conf/nginx.conf
+sed -i "s@/data/wwwlogs@$wwwlogs_dir@g" $nginx_install_dir/conf/nginx.conf
 sed -i "s@^user www www@user $run_user $run_user@" $nginx_install_dir/conf/nginx.conf
 [ "$je_tc_malloc" == '2' ] && sed -i 's@^pid\(.*\)@pid\1\ngoogle_perftools_profiles /tmp/tcmalloc;@' $nginx_install_dir/conf/nginx.conf 
-
-# worker_cpu_affinity
-CPU_num=`cat /proc/cpuinfo | grep processor | wc -l`
-if [ "$CPU_num" == '2' ];then
-    sed -i 's@^worker_processes.*@worker_processes 2;\nworker_cpu_affinity 10 01;@' $nginx_install_dir/conf/nginx.conf
-elif [ "$CPU_num" == '3' ];then
-    sed -i 's@^worker_processes.*@worker_processes 3;\nworker_cpu_affinity 100 010 001;@' $nginx_install_dir/conf/nginx.conf
-elif [ "$CPU_num" == '4' ];then
-    sed -i 's@^worker_processes.*@worker_processes 4;\nworker_cpu_affinity 1000 0100 0010 0001;@' $nginx_install_dir/conf/nginx.conf
-elif [ "$CPU_num" == '6' ];then
-    sed -i 's@^worker_processes.*@worker_processes 6;\nworker_cpu_affinity 100000 010000 001000 000100 000010 000001;@' $nginx_install_dir/conf/nginx.conf
-elif [ "$CPU_num" == '8' ];then
-    sed -i 's@^worker_processes.*@worker_processes 8;\nworker_cpu_affinity 10000000 01000000 00100000 00010000 00001000 00000100 00000010 00000001;@' $nginx_install_dir/conf/nginx.conf
-else
-    echo Google worker_cpu_affinity
-fi
 
 # logrotate nginx log
 cat > /etc/logrotate.d/nginx << EOF

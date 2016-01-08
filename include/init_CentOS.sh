@@ -29,7 +29,7 @@ yum check-update
 [ "$upgrade_yn" == 'y' ] && yum -y upgrade
 
 # Install needed packages
-for Package in deltarpm gcc gcc-c++ make cmake autoconf libjpeg libjpeg-devel libpng libpng-devel freetype freetype-devel libxml2 libxml2-devel zlib zlib-devel glibc glibc-devel glib2 glib2-devel bzip2 bzip2-devel ncurses ncurses-devel libaio readline-devel curl curl-devel e2fsprogs e2fsprogs-devel krb5-devel libidn libidn-devel openssl openssl-devel libxslt-devel libevent-devel libtool libtool-ltdl bison gd-devel vim-enhanced pcre-devel zip unzip ntpdate sysstat patch bc expect rsync git
+for Package in deltarpm gcc gcc-c++ make cmake autoconf libjpeg libjpeg-devel libpng libpng-devel freetype freetype-devel libxml2 libxml2-devel zlib zlib-devel glibc glibc-devel glib2 glib2-devel bzip2 bzip2-devel ncurses ncurses-devel libaio readline-devel curl curl-devel e2fsprogs e2fsprogs-devel krb5-devel libidn libidn-devel openssl openssl-devel libxslt-devel libevent-devel libtool libtool-ltdl bison gd-devel vim-enhanced pcre-devel zip unzip ntpdate sysstat patch bc expect rsync git lsof lrzsz
 do
     yum -y install $Package
 done
@@ -89,9 +89,6 @@ ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 #nameserver 8.8.8.8 
 #EOF
 
-# Wrong password five times locked 180s
-[ -z "`cat /etc/pam.d/system-auth | grep 'pam_tally2.so'`" ] && sed -i '4a auth        required      pam_tally2.so deny=5 unlock_time=180' /etc/pam.d/system-auth
-
 # alias vi
 [ -z "`cat ~/.bashrc | grep 'alias vi='`" ] && sed -i "s@alias mv=\(.*\)@alias mv=\1\nalias vi=vim@" ~/.bashrc && echo 'syntax on' >> /etc/vimrc
 
@@ -138,6 +135,7 @@ else
 fi 
 
 if [ "$IPTABLES_STATUS" == 'no' ];then
+    [ -e '/etc/sysconfig/iptables' ] && /bin/mv /etc/sysconfig/iptables{,_bk} 
     cat > /etc/sysconfig/iptables << EOF
 # Firewall configuration written by system-config-securitylevel
 # Manual customization of this file is not recommended.
@@ -169,21 +167,21 @@ service sshd restart
 # install tmux
 if [ ! -e "`which tmux`" ];then
     cd src
-    src_url=http://downloads.sourceforge.net/project/levent/libevent/libevent-2.0/libevent-2.0.22-stable.tar.gz && Download_src 
-    src_url=http://downloads.sourceforge.net/project/tmux/tmux/tmux-2.0/tmux-2.0.tar.gz && Download_src 
+    src_url=http://mirrors.linuxeye.com/oneinstack/src/libevent-2.0.22-stable.tar.gz && Download_src 
+    src_url=http://mirrors.linuxeye.com/oneinstack/src/tmux-2.1.tar.gz && Download_src 
     tar xzf libevent-2.0.22-stable.tar.gz
     cd libevent-2.0.22-stable
     ./configure
     make && make install
     cd ..
 
-    tar xzf tmux-2.0.tar.gz
-    cd tmux-2.0
+    tar xzf tmux-2.1.tar.gz
+    cd tmux-2.1
     CFLAGS="-I/usr/local/include" LDFLAGS="-L//usr/local/lib" ./configure
     make && make install
     cd ../../
 
-    if [ `getconf WORD_BIT` == 32 ] && [ `getconf LONG_BIT` == 64 ];then
+    if [ "$OS_BIT" == '64' ];then
         ln -s /usr/local/lib/libevent-2.0.so.5 /usr/lib64/libevent-2.0.so.5
     else
         ln -s /usr/local/lib/libevent-2.0.so.5 /usr/lib/libevent-2.0.so.5

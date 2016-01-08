@@ -11,7 +11,7 @@
 Install_Tengine()
 {
 cd $oneinstack_dir/src
-src_url=http://downloads.sourceforge.net/project/pcre/pcre/$pcre_version/pcre-$pcre_version.tar.gz && Download_src
+src_url=http://mirrors.linuxeye.com/oneinstack/src/pcre-$pcre_version.tar.gz && Download_src
 src_url=http://tengine.taobao.org/download/tengine-$tengine_version.tar.gz && Download_src
 
 tar xzf pcre-$pcre_version.tar.gz
@@ -67,10 +67,13 @@ cd ..
 sed -i "s@/usr/local/nginx@$tengine_install_dir@g" /etc/init.d/nginx
 
 mv $tengine_install_dir/conf/nginx.conf{,_bk}
-if [ "$Apache_version" == '1' -o "$Apache_version" == '2' ];then
+if [[ $Apache_version =~ ^[1-2]$ ]];then
     /bin/cp config/nginx_apache.conf $tengine_install_dir/conf/nginx.conf
+elif [[ $Tomcat_version =~ ^[1-2]$ ]] && [ ! -e "$php_install_dir/bin/php" ];then
+    /bin/cp config/nginx_tomcat.conf $tengine_install_dir/conf/nginx.conf
 else
     /bin/cp config/nginx.conf $tengine_install_dir/conf/nginx.conf
+    [ "$PHP_yn" == 'y' ] && [ -z "`grep '/php-fpm_status' $tengine_install_dir/conf/nginx.conf`" ] &&  sed -i "s@index index.html index.php;@index index.html index.php;\n    location ~ /php-fpm_status {\n        #fastcgi_pass remote_php_ip:9000;\n        fastcgi_pass unix:/dev/shm/php-cgi.sock;\n        fastcgi_index index.php;\n        include fastcgi.conf;\n        allow 127.0.0.1;\n        deny all;\n        }@" $tengine_install_dir/conf/nginx.conf
 fi
 cat > $tengine_install_dir/conf/proxy.conf << EOF
 proxy_connect_timeout 300s;
@@ -88,10 +91,11 @@ proxy_set_header Host \$host;
 proxy_set_header X-Real-IP \$remote_addr;
 proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
 EOF
-sed -i "s@/home/wwwroot/default@$wwwroot_dir/default@" $tengine_install_dir/conf/nginx.conf
-sed -i "s@/home/wwwlogs@$wwwlogs_dir@g" $tengine_install_dir/conf/nginx.conf
+sed -i "s@/data/wwwroot/default@$wwwroot_dir/default@" $tengine_install_dir/conf/nginx.conf
+sed -i "s@/data/wwwlogs@$wwwlogs_dir@g" $tengine_install_dir/conf/nginx.conf
 sed -i "s@^user www www@user $run_user $run_user@" $tengine_install_dir/conf/nginx.conf
 [ "$je_tc_malloc" == '2' ] && sed -i 's@^pid\(.*\)@pid\1\ngoogle_perftools_profiles /tmp/tcmalloc;@' $tengine_install_dir/conf/nginx.conf 
+uname -r | awk -F'.' '{if ($1$2>=39)S=0;else S=1}{exit S}' && [ -z "`grep 'reuse_port on;' $tengine_install_dir/conf/nginx.conf`" ] && sed -i "s@worker_connections 51200;@worker_connections 51200;\n    reuse_port on;@" $tengine_install_dir/conf/nginx.conf
 
 # worker_cpu_affinity
 sed -i "s@^worker_processes.*@worker_processes auto;\nworker_cpu_affinity auto;\ndso {\n\tload ngx_http_concat_module.so;\n\tload ngx_http_sysguard_module.so;\n}@" $tengine_install_dir/conf/nginx.conf
