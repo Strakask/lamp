@@ -5,7 +5,7 @@
 # Notes: OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+
 #
 # Project home page:
-#       http://oneinstack.com
+#       https://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
 . ../options.conf
@@ -24,7 +24,7 @@ if [ `du -sm "$wwwroot_dir/$WebSite" | awk '{print $1}'` -lt 1024 ];then
     else
         echo "[$OldFile] Delete Old Backup File" >> $LogFile
     fi
-    
+
     if [ -e "$NewFile" ];then
         echo "[$NewFile] The Backup File is exists, Can't Backup" >> $LogFile
     else

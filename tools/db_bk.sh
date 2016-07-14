@@ -5,11 +5,11 @@
 # Notes: OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+
 #
 # Project home page:
-#       http://oneinstack.com
+#       https://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
 . ../options.conf
-. ../include/check_db.sh
+. ../include/check_dir.sh
 
 DBname=$1
 LogFile=$backup_dir/db.log
@@ -32,7 +32,7 @@ fi
 if [ -e "$NewFile" ];then
     echo "[$NewFile] The Backup File is exists, Can't Backup" >> $LogFile
 else
-    $db_install_dir/bin/mysqldump -uroot -p$dbrootpwd --opt --databases $DBname > $DumpFile 
+    $db_install_dir/bin/mysqldump -uroot -p$dbrootpwd --databases $DBname > $DumpFile
     cd $backup_dir
     tar czf $NewFile ${DumpFile##*/} >> $LogFile 2>&1
     echo "[$NewFile] Backup success ">> $LogFile

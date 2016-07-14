@@ -5,7 +5,7 @@
 # Notes: OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+
 #
 # Project home page:
-#       http://oneinstack.com
+#       https://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
 export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
@@ -13,17 +13,18 @@ clear
 printf "
 #######################################################################
 #       OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+      #
-#       For more information please visit http://oneinstack.com       #
+#       For more information please visit https://oneinstack.com      #
 #######################################################################
 "
 
 . ./options.conf
 . ./include/color.sh
-. ./include/check_web.sh
+. ./include/check_dir.sh
+. ./include/check_os.sh
 . ./include/get_char.sh
 
 # Check if user is root
-[ $(id -u) != "0" ] && { echo "${CFAILURE}Error: You must be root to run this script${CEND}"; exit 1; } 
+[ $(id -u) != "0" ] && { echo "${CFAILURE}Error: You must be root to run this script${CEND}"; exit 1; }
 
 Usage() {
 printf "
@@ -37,9 +38,7 @@ ${CMSG}del${CEND}    --->Delete Virtualhost
 Choose_env() {
 if [ -e "$php_install_dir/bin/phpize" -a -e "$tomcat_install_dir/conf/server.xml" -a -e "/usr/bin/hhvm" ];then
     Number=111
-    while :
-    do
-        echo
+    while :; do echo
         echo 'Please choose to use environment:'
         echo -e "\t${CMSG}1${CEND}. Use php"
         echo -e "\t${CMSG}2${CEND}. Use java"
@@ -57,9 +56,7 @@ if [ -e "$php_install_dir/bin/phpize" -a -e "$tomcat_install_dir/conf/server.xml
     [ "$Choose_number" == '3' ] && NGX_FLAG=hhvm
 elif [ -e "$php_install_dir/bin/phpize" -a -e "$tomcat_install_dir/conf/server.xml" -a ! -e "/usr/bin/hhvm" ];then
     Number=110
-    while :
-    do
-        echo
+    while :; do echo
         echo 'Please choose to use environment:'
         echo -e "\t${CMSG}1${CEND}. Use php"
         echo -e "\t${CMSG}2${CEND}. Use java"
@@ -78,9 +75,7 @@ elif [ -e "$php_install_dir/bin/phpize" -a ! -e "$tomcat_install_dir/conf/server
     NGX_FLAG=php
 elif [ -e "$php_install_dir/bin/phpize" -a ! -e "$tomcat_install_dir/conf/server.xml" -a -e "/usr/bin/hhvm" ];then
     Number=101
-    while :
-    do
-        echo
+    while :; do echo
         echo 'Please choose to use environment:'
         echo -e "\t${CMSG}1${CEND}. Use php"
         echo -e "\t${CMSG}2${CEND}. Use hhvm"
@@ -96,9 +91,7 @@ elif [ -e "$php_install_dir/bin/phpize" -a ! -e "$tomcat_install_dir/conf/server
     [ "$Choose_number" == '2' ] && NGX_FLAG=hhvm
 elif [ ! -e "$php_install_dir/bin/phpize" -a -e "$tomcat_install_dir/conf/server.xml" -a -e "/usr/bin/hhvm" ];then
     Number=011
-    while :
-    do
-        echo
+    while :; do echo
         echo 'Please choose to use environment:'
         echo -e "\t${CMSG}1${CEND}. Use java"
         echo -e "\t${CMSG}2${CEND}. Use hhvm"
@@ -132,7 +125,7 @@ elif [ "$NGX_FLAG" == 'hhvm' ];then
 fi
 }
 
-Nginx_ssl() {
+Create_self_SSL() {
 printf "
 You are about to be asked to enter information that will be incorporated
 into your certificate request.
@@ -162,30 +155,86 @@ echo
 read -p "Organizational Unit Name (eg, section) [IT Dept.]: " SELFSIGNEDSSL_OU
 [ -z "$SELFSIGNEDSSL_OU" ] && SELFSIGNEDSSL_OU='IT Dept.'
 
-if [[ "$($web_install_dir/sbin/nginx -V 2>&1 | grep -Eo 'with-http_v2_module')" = 'with-http_v2_module' ]]; then
-  LISTENOPT='443 ssl http2'
-else
-  LISTENOPT='443 ssl spdy'
-fi
+openssl req -new -newkey rsa:2048 -sha256 -nodes -out $PATH_SSL/${domain}.csr -keyout $PATH_SSL/${domain}.key -subj "/C=${SELFSIGNEDSSL_C}/ST=${SELFSIGNEDSSL_ST}/L=${SELFSIGNEDSSL_L}/O=${SELFSIGNEDSSL_O}/OU=${SELFSIGNEDSSL_OU}/CN=${domain}" > /dev/null 2>&1
+/bin/cp $PATH_SSL/${domain}.csr{,_bk.`date +%Y-%m-%d_%H%M`}
+/bin/cp $PATH_SSL/${domain}.key{,_bk.`date +%Y-%m-%d_%H%M`}
+openssl x509 -req -days 36500 -sha256 -in $PATH_SSL/${domain}.csr -signkey $PATH_SSL/${domain}.key -out $PATH_SSL/${domain}.crt > /dev/null 2>&1
+}
 
-openssl req -new -newkey rsa:2048 -sha256 -nodes -out $web_install_dir/conf/${domain}.csr -keyout $web_install_dir/conf/${domain}.key -subj "/C=${SELFSIGNEDSSL_C}/ST=${SELFSIGNEDSSL_ST}/L=${SELFSIGNEDSSL_L}/O=${SELFSIGNEDSSL_O}/OU=${SELFSIGNEDSSL_OU}/CN=${domain}" > /dev/null 2>&1
-/bin/cp $web_install_dir/conf/${domain}.csr{,_bk.`date +%Y-%m-%d_%H%M`}
-/bin/cp $web_install_dir/conf/${domain}.key{,_bk.`date +%Y-%m-%d_%H%M`}
-openssl x509 -req -days 36500 -sha256 -in $web_install_dir/conf/${domain}.csr -signkey $web_install_dir/conf/${domain}.key -out $web_install_dir/conf/${domain}.crt > /dev/null 2>&1
+Create_SSL() {
+if [ -e "/usr/local/bin/certbot-auto" -a -e "/root/.local/share/letsencrypt/bin/letsencrypt" ];then
+    while :; do echo
+        read -p "Do you want to use a Let's Encrypt certificate? [y/n]: " letsencrypt_yn 
+        if [[ ! $letsencrypt_yn =~ ^[y,n]$ ]];then
+            echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+        else
+            break
+        fi
+    done
+    if [ "$letsencrypt_yn" == 'y' ];then
+        PUBLIC_IPADDR=`./include/get_public_ipaddr.py`
+        for D in $domain $moredomainame
+        do
+            Domain_IPADDR=`ping $D -c1 | sed '1{s/[^(]*(//;s/).*//;q}'`
+            [ "$PUBLIC_IPADDR" != "$Domain_IPADDR" ] && { echo; echo "${CFAILURE}DNS problem: NXDOMAIN looking up A for $D${CEND}"; echo; exit 1; }
+        done
+
+        #add Email
+        while :
+        do
+            echo
+            read -p "Please enter Administrator Email(example: admin@linuxeye.com): " Admin_Email
+            if [ -z "`echo $Admin_Email | grep '.*@.*\..*'`" ]; then
+                echo "${CWARNING}input error! ${CEND}"
+            else
+                break
+            fi
+        done
+        [ "$moredomainame_yn" == 'y' ] && moredomainame_D="`for D in $moredomainame; do echo -d $D; done`"
+        [ "$nginx_ssl_yn" == 'y' ] && S=nginx
+        [ "$apache_ssl_yn" == 'y' ] && S=httpd
+        [ ! -d "$wwwroot_dir/$domain/.well-known" ] && mkdir -p $wwwroot_dir/$domain/.well-known;chown -R $run_user.$run_user $wwwroot_dir/$domain/.well-known 
+        certbot-auto certonly --standalone --agree-tos --email $Admin_Email -d $domain $moredomainame_D --pre-hook "service $S stop" --post-hook "service $S start"
+        if [ -s "/etc/letsencrypt/live/$domain/cert.pem" ];then
+            [ -e "$PATH_SSL/$domain.crt" ] && rm -rf $PATH_SSL/$domain.{crt,key}
+            ln -s /etc/letsencrypt/live/$domain/fullchain.pem $PATH_SSL/$domain.crt
+            ln -s /etc/letsencrypt/live/$domain/privkey.pem $PATH_SSL/$domain.key
+            if [ -e "$web_install_dir/sbin/nginx" -a -e "$apache_install_dir/conf/httpd.conf" ];then 
+                Cron_Command='/etc/init.d/nginx reload;/etc/init.d/httpd graceful'
+            elif [ -e "$web_install_dir/sbin/nginx" -a ! -e "$apache_install_dir/conf/httpd.conf" ];then 
+                Cron_Command='/etc/init.d/nginx reload'
+            elif [ ! -e "$web_install_dir/sbin/nginx" -a -e "$apache_install_dir/conf/httpd.conf" ];then 
+                Cron_Command='/etc/init.d/httpd graceful'
+            fi
+            [ "$OS" == 'CentOS' ] && Cron_file=/var/spool/cron/root || Cron_file=/var/spool/cron/crontabs/root
+            [ -z "`grep "$domain $moredomainame_D" $Cron_file`" ] && echo "0 10 * * 1 /usr/local/bin/certbot-auto certonly -a webroot --agree-tos --renew-by-default --webroot-path=$wwwroot_dir/$domain -d $domain $moredomainame_D;$Cron_Command" >> $Cron_file
+        else
+            echo "${CFAILURE}Error: Let's Encrypt SSL certificate installation failed${CEND}"
+            exit 1
+        fi
+    else
+        Create_self_SSL
+    fi
+else
+    Create_self_SSL
+fi
 }
 
 Print_ssl() {
-echo "`printf "%-30s" "Self-signed SSL Certificate:"`${CMSG}$web_install_dir/conf/${domain}.crt${CEND}"
-echo "`printf "%-30s" "SSL Private Key:"`${CMSG}$web_install_dir/conf/${domain}.key${CEND}"
-echo "`printf "%-30s" "SSL CSR File:"`${CMSG}$web_install_dir/conf/${domain}.csr${CEND}"
+if [ "$letsencrypt_yn" == 'y' ];then
+    echo "`printf "%-30s" "Let's Encrypt SSL Certificate:"`${CMSG}/etc/letsencrypt/live/$domain/fullchain.pem${CEND}"
+    echo "`printf "%-30s" "SSL Private Key:"`${CMSG}/etc/letsencrypt/live/$domain/privkey.pem${CEND}"
+else
+    echo "`printf "%-30s" "Self-signed SSL Certificate:"`${CMSG}$PATH_SSL/${domain}.crt${CEND}"
+    echo "`printf "%-30s" "SSL Private Key:"`${CMSG}$PATH_SSL/${domain}.key${CEND}"
+    echo "`printf "%-30s" "SSL CSR File:"`${CMSG}$PATH_SSL/${domain}.csr${CEND}"
+fi
 }
 
 
 Input_Add_domain() {
 if [ -e "$web_install_dir/sbin/nginx" ];then
-    while :
-    do
-        echo
+    while :; do echo
         read -p "Do you want to setup SSL under Nginx? [y/n]: " nginx_ssl_yn
         if [[ ! $nginx_ssl_yn =~ ^[y,n]$ ]];then
             echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
@@ -193,11 +242,21 @@ if [ -e "$web_install_dir/sbin/nginx" ];then
             break
         fi
     done
+elif [ ! -e "$web_install_dir/sbin/nginx" -a -e "$apache_install_dir/bin/apachectl" ];then
+    while :; do echo
+        read -p "Do you want to setup SSL under Apache? [y/n]: " apache_ssl_yn
+        if [[ ! $apache_ssl_yn =~ ^[y,n]$ ]];then
+            echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+        else
+            break
+        fi
+    done
 fi
 
-while :
-do
-    echo
+[ "$apache_ssl_yn" == 'y' ] && { PATH_SSL=$apache_install_dir/conf/ssl; [ ! -d "$PATH_SSL" ] && mkdir $PATH_SSL; }
+[ "$nginx_ssl_yn" == 'y' ] && { PATH_SSL=$web_install_dir/conf/ssl; [ ! -d "$PATH_SSL" ] && mkdir $PATH_SSL; }
+
+while :; do echo
     read -p "Please input domain(example: www.linuxeye.com): " domain
     if [ -z "`echo $domain | grep '.*\..*'`" ]; then
         echo "${CWARNING}input error! ${CEND}"
@@ -207,7 +266,7 @@ do
 done
 
 if [ -e "$web_install_dir/conf/vhost/$domain.conf" -o -e "$apache_install_dir/conf/vhost/$domain.conf" -o -e "$tomcat_install_dir/conf/vhost/$domain.xml" ]; then
-    [ -e "$web_install_dir/conf/vhost/$domain.conf" ] && echo -e "$domain in the Nginx/Tengine already exist! \nYou can delete ${CMSG}$web_install_dir/conf/vhost/$domain.conf${CEND} and re-create"
+    [ -e "$web_install_dir/conf/vhost/$domain.conf" ] && echo -e "$domain in the Nginx/Tengine/OpenResty already exist! \nYou can delete ${CMSG}$web_install_dir/conf/vhost/$domain.conf${CEND} and re-create"
     [ -e "$apache_install_dir/conf/vhost/$domain.conf" ] && echo -e "$domain in the Apache already exist! \nYou can delete ${CMSG}$apache_install_dir/conf/vhost/$domain.conf${CEND} and re-create"
     [ -e "$tomcat_install_dir/conf/vhost/$domain.xml" ] && echo -e "$domain in the Tomcat already exist! \nYou can delete ${CMSG}$tomcat_install_dir/conf/vhost/$domain.xml${CEND} and re-create"
     exit
@@ -215,17 +274,7 @@ else
     echo "domain=$domain"
 fi
 
-if [ "$nginx_ssl_yn" == 'y' ]; then
-    Nginx_ssl
-    Nginx_conf=$(echo -e "listen $LISTENOPT;\nssl_certificate $web_install_dir/conf/$domain.crt;\nssl_certificate_key $web_install_dir/conf/$domain.key;\nssl_session_timeout 10m;\nssl_protocols TLSv1 TLSv1.1 TLSv1.2;\nssl_prefer_server_ciphers on;\nssl_ciphers "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-RC4-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:RC4-SHA:\!aNULL:\!eNULL:\!EXPORT:\!DES:\!3DES:\!MD5:\!DSS:\!PKS";\nssl_session_cache builtin:1000 shared:SSL:10m;\nresolver 8.8.8.8 8.8.4.4 valid=300s;\nresolver_timeout 5s;")
-    Nginx_http_to_https=$(echo -e "server {\nlisten 80;\nserver_name $domain;\nrewrite ^/(.*) https://\$server_name/\$1 permanent;\n}")
-else
-    Nginx_conf='listen 80;'
-fi
-
-while :
-do
-    echo
+while :; do echo
     read -p "Do you want to add more domain name? [y/n]: " moredomainame_yn
     if [[ ! $moredomainame_yn =~ ^[y,n]$ ]];then
         echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
@@ -235,9 +284,7 @@ do
 done
 
 if [ "$moredomainame_yn" == 'y' ]; then
-    while :
-    do
-        echo
+    while :; do echo
         read -p "Type domainname or IP(example: linuxeye.com 121.43.8.8): " moredomain
         if [ -z "`echo $moredomain | grep '.*\..*'`" ]; then
             echo "${CWARNING}input error! ${CEND}"
@@ -252,9 +299,7 @@ if [ "$moredomainame_yn" == 'y' ]; then
     Tomcat_Domain_alias=$(for D in `echo $moredomainame`; do echo "<Alias>$D</Alias>"; done)
 
     if [ -e "$web_install_dir/sbin/nginx" ];then
-        while :
-        do
-            echo
+        while :; do echo
             read -p "Do you want to redirect from $moredomain to $domain? [y/n]: " redirect_yn
             if [[ ! $redirect_yn =~ ^[y,n]$ ]];then
                 echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
@@ -262,14 +307,29 @@ if [ "$moredomainame_yn" == 'y' ]; then
                 break
             fi
         done
-        [ "$nginx_ssl_yn" == 'y' ] && HTTP_flag=https || HTTP_flag=http 
-        [ "$redirect_yn" == 'y' ] && Nginx_redirect=$(echo -e "if (\$host != $domain) {\n\trewrite ^/(.*)\$ \$scheme://$domain/\$1 permanent;\n\t}")
+        [ "$redirect_yn" == 'y' ] && Nginx_redirect=$(echo -e "if (\$host != $domain) {\n    rewrite ^/(.*)\$ \$scheme://$domain/\$1 permanent;\n    }")
     fi
 fi
 
-while :
-do
-    echo
+if [ "$nginx_ssl_yn" == 'y' ]; then
+    if [[ "$($web_install_dir/sbin/nginx -V 2>&1 | grep -Eo 'with-http_v2_module')" = 'with-http_v2_module' ]]; then
+      LISTENOPT='443 ssl http2'
+    else
+      LISTENOPT='443 ssl spdy'
+    fi
+    Create_SSL
+    Nginx_conf=$(echo -e "listen $LISTENOPT;\nssl_certificate $PATH_SSL/$domain.crt;\nssl_certificate_key $PATH_SSL/$domain.key;\nssl_session_timeout 10m;\nssl_protocols TLSv1 TLSv1.1 TLSv1.2;\nssl_prefer_server_ciphers on;\nssl_ciphers "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-RC4-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:RC4-SHA:\!aNULL:\!eNULL:\!EXPORT:\!DES:\!3DES:\!MD5:\!DSS:\!PKS";\nssl_session_cache builtin:1000 shared:SSL:10m;\nresolver 8.8.8.8 8.8.4.4 valid=300s;\nresolver_timeout 5s;")
+    Apache_SSL=$(echo -e "SSLEngine on\n    SSLCertificateFile \"$PATH_SSL/$domain.crt\"\n    SSLCertificateKeyFile \"$PATH_SSL/$domain.key\"")
+elif [ "$apache_ssl_yn" == 'y' ]; then
+    Create_SSL
+    Apache_SSL=$(echo -e "SSLEngine on\n    SSLCertificateFile \"$PATH_SSL/$domain.crt\"\n    SSLCertificateKeyFile \"$PATH_SSL/$domain.key\"")
+    [ -z "`grep 'Listen 443' $apache_install_dir/conf/httpd.conf`" ] && sed -i "s@Listen 80@&\nListen 443@" $apache_install_dir/conf/httpd.conf
+    [ -z "`grep 'ServerName 0.0.0.0:443' $apache_install_dir/conf/httpd.conf`" ] && sed -i "s@ServerName 0.0.0.0:80@&\nServerName 0.0.0.0:443@" $apache_install_dir/conf/httpd.conf
+else
+    Nginx_conf='listen 80;'
+fi
+
+while :; do echo
     echo "Please input the directory for the domain:$domain :"
     read -p "(Default directory: $wwwroot_dir/$domain): " vhostdir
     if [ -n "$vhostdir" -a -z "`echo $vhostdir | grep '^/'`" ];then
@@ -290,10 +350,8 @@ done
 }
 
 Nginx_anti_hotlinking() {
-while :
-do
-    echo
-    read -p "Do you want to add hotlink protection? [y/n]: " anti_hotlinking_yn 
+while :; do echo
+    read -p "Do you want to add hotlink protection? [y/n]: " anti_hotlinking_yn
     if [[ ! $anti_hotlinking_yn =~ ^[y,n]$ ]];then
         echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
     else
@@ -307,7 +365,7 @@ else
     domain_allow="*.$domain $domain"
 fi
 
-if [ "$anti_hotlinking_yn" == 'y' ];then 
+if [ "$anti_hotlinking_yn" == 'y' ];then
     if [ "$moredomainame_yn" == 'y' ]; then
         domain_allow_all=$domain_allow$moredomainame
     else
@@ -320,46 +378,43 @@ fi
 }
 
 Nginx_rewrite() {
-while :
-do
-    echo
+[ ! -d "$web_install_dir/conf/rewrite" ] && mkdir $web_install_dir/conf/rewrite
+while :; do echo
     read -p "Allow Rewrite rule? [y/n]: " rewrite_yn
     if [[ ! $rewrite_yn =~ ^[y,n]$ ]];then
         echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
     else
-        break 
+        break
     fi
 done
 if [ "$rewrite_yn" == 'n' ];then
     rewrite="none"
-    touch "$web_install_dir/conf/$rewrite.conf"
+    touch "$web_install_dir/conf/rewrite/$rewrite.conf"
 else
     echo
     echo "Please input the rewrite of programme :"
     echo "${CMSG}wordpress${CEND},${CMSG}discuz${CEND},${CMSG}opencart${CEND},${CMSG}thinkphp${CEND},${CMSG}laravel${CEND},${CMSG}typecho${CEND},${CMSG}ecshop${CEND},${CMSG}drupal${CEND},${CMSG}joomla${CEND} rewrite was exist."
     read -p "(Default rewrite: other):" rewrite
     if [ "$rewrite" == "" ]; then
-    	rewrite="other"
+        rewrite="other"
     fi
     echo "You choose rewrite=${CMSG}$rewrite${CEND}"
-    [ "$NGX_FLAG" == 'php' -a "$rewrite" == "thinkphp" ] && NGX_CONF=$(echo -e "location ~ \.php {\n    #fastcgi_pass remote_php_ip:9000;\n    fastcgi_pass unix:/dev/shm/php-cgi.sock;\n    fastcgi_index index.php;\n    include fastcgi_params;\n    set \$real_script_name \$fastcgi_script_name;\n        if (\$fastcgi_script_name ~ \"^(.+?\.php)(/.+)\$\") {\n        set \$real_script_name \$1;\n        set \$path_info \$2;\n        }\n    fastcgi_param SCRIPT_FILENAME \$document_root\$real_script_name;\n    fastcgi_param SCRIPT_NAME \$real_script_name;\n    fastcgi_param PATH_INFO \$path_info;\n    }")
+    [ "$NGX_FLAG" == 'php' -a "$rewrite" == "thinkphp" ] && NGX_CONF=$(echo -e "location ~ \.php {\n    #fastcgi_pass remote_php_ip:9000;\n    fastcgi_pass unix:/dev/shm/php-cgi.sock;\n    fastcgi_index index.php;\n    include fastcgi_params;\n    set \$real_script_name \$fastcgi_script_name;\n        if (\$fastcgi_script_name ~ \"^(.+?\.php)(/.+)\$\") {\n        set \$real_script_name \$1;\n        #set \$path_info \$2;\n        }\n    fastcgi_param SCRIPT_FILENAME \$document_root\$real_script_name;\n    fastcgi_param SCRIPT_NAME \$real_script_name;\n    #fastcgi_param PATH_INFO \$path_info;\n    }")
     if [ -e "config/$rewrite.conf" ];then
-    	/bin/cp config/$rewrite.conf $web_install_dir/conf/$rewrite.conf
+        /bin/cp config/$rewrite.conf $web_install_dir/conf/rewrite/$rewrite.conf
     else
-    	touch "$web_install_dir/conf/$rewrite.conf"
+        touch "$web_install_dir/conf/rewrite/$rewrite.conf"
     fi
 fi
 }
 
 Nginx_log() {
-while :
-do
-    echo
-    read -p "Allow Nginx/Tengine access_log? [y/n]: " access_yn 
+while :; do echo
+    read -p "Allow Nginx/Tengine/OpenResty access_log? [y/n]: " access_yn
     if [[ ! $access_yn =~ ^[y,n]$ ]];then
         echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
     else
-        break 
+        break
     fi
 done
 if [ "$access_yn" == 'n' ]; then
@@ -391,8 +446,38 @@ location ~ .*\.(js|css)?$ {
     }
 $NGX_CONF
 }
-$Nginx_http_to_https
 EOF
+
+if [ "$nginx_ssl_yn" == 'y' -a "$redirect_yn" == 'y' ];then
+cat >> $web_install_dir/conf/vhost/$domain.conf << EOF
+server {
+listen 80;
+server_name $domain$moredomainame;
+rewrite ^/(.*) https://$domain/\$1 permanent;
+}
+EOF
+elif [ "$nginx_ssl_yn" == 'y' ];then
+cat >> $web_install_dir/conf/vhost/$domain.conf << EOF
+server {
+listen 80;
+server_name $domain$moredomainame;
+$N_log
+index index.html index.htm index.jsp;
+root $vhostdir;
+$Nginx_redirect
+$anti_hotlinking
+location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|flv|ico)$ {
+    expires 30d;
+    access_log off;
+    }
+location ~ .*\.(js|css)?$ {
+    expires 7d;
+    access_log off;
+    }
+$NGX_CONF
+}
+EOF
+fi
 
 cat > $tomcat_install_dir/conf/vhost/$domain.xml << EOF
 <Host name="$domain" appBase="webapps" unpackWARs="true" autoDeploy="true"> $Tomcat_Domain_alias
@@ -401,8 +486,8 @@ cat > $tomcat_install_dir/conf/vhost/$domain.xml << EOF
          prefix="${domain}_access_log." suffix=".txt" pattern="%h %l %u %t &quot;%r&quot; %s %b" />
 </Host>
 EOF
-[ -z "`grep -o "${domain}-vhost SYSTEM" $tomcat_install_dir/conf/server.xml`" ] && sed -i "/localhost-vhost SYSTEM/a<\!ENTITY ${domain}-vhost SYSTEM \"file://$tomcat_install_dir/conf/vhost/$domain.xml\">" $tomcat_install_dir/conf/server.xml
-[ -z "`grep -o "${domain}-vhost;" $tomcat_install_dir/conf/server.xml`" ] && sed -i "s@localhost-vhost;@&\n      \&${domain}-vhost;@" $tomcat_install_dir/conf/server.xml
+[ -z "`grep -o "vhost-${domain} SYSTEM" $tomcat_install_dir/conf/server.xml`" ] && sed -i "/vhost-localhost SYSTEM/a<\!ENTITY vhost-${domain} SYSTEM \"file://$tomcat_install_dir/conf/vhost/$domain.xml\">" $tomcat_install_dir/conf/server.xml
+[ -z "`grep -o "vhost-${domain};" $tomcat_install_dir/conf/server.xml`" ] && sed -i "s@vhost-localhost;@&\n      \&vhost-${domain};@" $tomcat_install_dir/conf/server.xml
 
 echo
 $web_install_dir/sbin/nginx -t
@@ -419,7 +504,7 @@ fi
 printf "
 #######################################################################
 #       OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+      #
-#       For more information please visit http://oneinstack.com       #
+#       For more information please visit https://oneinstack.com      #
 #######################################################################
 "
 echo "`printf "%-30s" "Your domain:"`${CMSG}$domain${CEND}"
@@ -437,8 +522,8 @@ cat > $tomcat_install_dir/conf/vhost/$domain.xml << EOF
          prefix="${domain}_access_log." suffix=".txt" pattern="%h %l %u %t &quot;%r&quot; %s %b" />
 </Host>
 EOF
-[ -z "`grep -o "${domain}-vhost SYSTEM" $tomcat_install_dir/conf/server.xml`" ] && sed -i "/localhost-vhost SYSTEM/a<\!ENTITY ${domain}-vhost SYSTEM \"file://$tomcat_install_dir/conf/vhost/$domain.xml\">" $tomcat_install_dir/conf/server.xml
-[ -z "`grep -o "${domain}-vhost;" $tomcat_install_dir/conf/server.xml`" ] && sed -i "s@localhost-vhost;@&\n      \&${domain}-vhost;@" $tomcat_install_dir/conf/server.xml
+[ -z "`grep -o "vhost-${domain} SYSTEM" $tomcat_install_dir/conf/server.xml`" ] && sed -i "/vhost-localhost SYSTEM/a<\!ENTITY vhost-${domain} SYSTEM \"file://$tomcat_install_dir/conf/vhost/$domain.xml\">" $tomcat_install_dir/conf/server.xml
+[ -z "`grep -o "vhost-${domain};" $tomcat_install_dir/conf/server.xml`" ] && sed -i "s@vhost-localhost;@&\n      \&vhost-${domain};@" $tomcat_install_dir/conf/server.xml
 
 echo
 /etc/init.d/tomcat restart
@@ -446,7 +531,7 @@ echo
 printf "
 #######################################################################
 #       OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+      #
-#       For more information please visit http://oneinstack.com       #
+#       For more information please visit https://oneinstack.com      #
 #######################################################################
 "
 echo "`printf "%-30s" "Your domain:"`${CMSG}$domain${CEND}"
@@ -463,7 +548,7 @@ $Nginx_conf
 server_name $domain$moredomainame;
 $N_log
 index index.html index.htm index.php;
-include $web_install_dir/conf/$rewrite.conf;
+include $web_install_dir/conf/rewrite/$rewrite.conf;
 root $vhostdir;
 $Nginx_redirect
 $anti_hotlinking
@@ -477,8 +562,39 @@ location ~ .*\.(js|css)?$ {
     access_log off;
     }
 }
-$Nginx_http_to_https
 EOF
+
+if [ "$nginx_ssl_yn" == 'y' -a "$redirect_yn" == 'y' ];then
+cat >> $web_install_dir/conf/vhost/$domain.conf << EOF
+server {
+listen 80;
+server_name $domain$moredomainame;
+rewrite ^/(.*) https://$domain/\$1 permanent;
+}
+EOF
+elif [ "$nginx_ssl_yn" == 'y' ];then
+cat >> $web_install_dir/conf/vhost/$domain.conf << EOF
+server {
+listen 80;
+server_name $domain$moredomainame;
+$N_log
+index index.html index.htm index.php;
+include $web_install_dir/conf/rewrite/$rewrite.conf;
+root $vhostdir;
+$Nginx_redirect
+$anti_hotlinking
+$NGX_CONF
+location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|flv|ico)$ {
+    expires 30d;
+    access_log off;
+    }
+location ~ .*\.(js|css)?$ {
+    expires 7d;
+    access_log off;
+    }
+}
+EOF
+fi
 
 echo
 $web_install_dir/sbin/nginx -t
@@ -494,20 +610,18 @@ fi
 printf "
 #######################################################################
 #       OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+      #
-#       For more information please visit http://oneinstack.com       #
+#       For more information please visit https://oneinstack.com      #
 #######################################################################
 "
 echo "`printf "%-30s" "Your domain:"`${CMSG}$domain${CEND}"
 echo "`printf "%-30s" "Virtualhost conf:"`${CMSG}$web_install_dir/conf/vhost/$domain.conf${CEND}"
 echo "`printf "%-30s" "Directory of:"`${CMSG}$vhostdir${CEND}"
-[ "$rewrite_yn" == 'y' ] && echo "`printf "%-30s" "Rewrite rule:"`${CMSG}$web_install_dir/conf/$rewrite.conf${CEND}" 
+[ "$rewrite_yn" == 'y' ] && echo "`printf "%-30s" "Rewrite rule:"`${CMSG}$web_install_dir/conf/rewrite/$rewrite.conf${CEND}"
 [ "$nginx_ssl_yn" == 'y' ] && Print_ssl
 }
 
 Apache_log() {
-while :
-do
-    echo
+while :; do echo
     read -p "Allow Apache access_log? [y/n]: " access_yn
     if [[ ! $access_yn =~ ^[y,n]$ ]];then
         echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
@@ -529,10 +643,30 @@ Create_apache_conf() {
 [ ! -d $apache_install_dir/conf/vhost ] && mkdir $apache_install_dir/conf/vhost
 cat > $apache_install_dir/conf/vhost/$domain.conf << EOF
 <VirtualHost *:80>
-    ServerAdmin admin@linuxeye.com 
+    ServerAdmin admin@linuxeye.com
     DocumentRoot "$vhostdir"
     ServerName $domain
     $Apache_Domain_alias
+    ErrorLog "$wwwlogs_dir/${domain}_error_apache.log"
+    $A_log
+<Directory "$vhostdir">
+    SetOutputFilter DEFLATE
+    Options FollowSymLinks ExecCGI
+    $R_TMP
+    AllowOverride All
+    Order allow,deny
+    Allow from all
+    DirectoryIndex index.html index.php
+</Directory>
+</VirtualHost>
+EOF
+[ "$apache_ssl_yn" == 'y' ] && cat >> $apache_install_dir/conf/vhost/$domain.conf << EOF
+<VirtualHost *:443>
+    ServerAdmin admin@linuxeye.com
+    DocumentRoot "$vhostdir"
+    ServerName $domain
+    $Apache_Domain_alias
+    $Apache_SSL
     ErrorLog "$wwwlogs_dir/${domain}_error_apache.log"
     $A_log
 <Directory "$vhostdir">
@@ -561,7 +695,7 @@ fi
 printf "
 #######################################################################
 #       OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+      #
-#       For more information please visit http://oneinstack.com       #
+#       For more information please visit https://oneinstack.com      #
 #######################################################################
 "
 echo "`printf "%-30s" "Your domain:"`${CMSG}$domain${CEND}"
@@ -570,7 +704,7 @@ echo "`printf "%-30s" "Directory of:"`${CMSG}$vhostdir${CEND}"
 }
 
 Create_nginx_apache_mod-php_conf() {
-# Nginx/Tengine
+# Nginx/Tengine/OpenResty
 [ ! -d $web_install_dir/conf/vhost ] && mkdir $web_install_dir/conf/vhost
 cat > $web_install_dir/conf/vhost/$domain.conf << EOF
 server {
@@ -601,8 +735,48 @@ location ~ .*\.(js|css)?$ {
     access_log off;
     }
 }
-$Nginx_http_to_https
 EOF
+
+if [ "$nginx_ssl_yn" == 'y' -a "$redirect_yn" == 'y' ];then
+cat >> $web_install_dir/conf/vhost/$domain.conf << EOF
+server {
+listen 80;
+server_name $domain$moredomainame;
+rewrite ^/(.*) https://$domain/\$1 permanent;
+}
+EOF
+elif [ "$nginx_ssl_yn" == 'y' ];then
+cat >> $web_install_dir/conf/vhost/$domain.conf << EOF
+server {
+listen 80;
+server_name $domain$moredomainame;
+$N_log
+index index.html index.htm index.php;
+root $vhostdir;
+$Nginx_redirect
+$anti_hotlinking
+location / {
+    try_files \$uri @apache;
+    }
+location @apache {
+    proxy_pass http://127.0.0.1:88;
+    include proxy.conf;
+    }
+location ~ .*\.(php|php5|cgi|pl)?$ {
+    proxy_pass http://127.0.0.1:88;
+    include proxy.conf;
+    }
+location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|flv|ico)$ {
+    expires 30d;
+    access_log off;
+    }
+location ~ .*\.(js|css)?$ {
+    expires 7d;
+    access_log off;
+    }
+}
+EOF
+fi
 
 echo
 $web_install_dir/sbin/nginx -t
@@ -623,6 +797,7 @@ cat > $apache_install_dir/conf/vhost/$domain.conf << EOF
     DocumentRoot "$vhostdir"
     ServerName $domain
     $Apache_Domain_alias
+    $Apache_SSL
     ErrorLog "$wwwlogs_dir/${domain}_error_apache.log"
     $A_log
 <Directory "$vhostdir">
@@ -650,19 +825,19 @@ fi
 printf "
 #######################################################################
 #       OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+      #
-#       For more information please visit http://oneinstack.com       #
+#       For more information please visit https://oneinstack.com      #
 #######################################################################
 "
 echo "`printf "%-30s" "Your domain:"`${CMSG}$domain${CEND}"
 echo "`printf "%-30s" "Nginx Virtualhost conf:"`${CMSG}$web_install_dir/conf/vhost/$domain.conf${CEND}"
 echo "`printf "%-30s" "Apache Virtualhost conf:"`${CMSG}$apache_install_dir/conf/vhost/$domain.conf${CEND}"
 echo "`printf "%-30s" "Directory of:"`${CMSG}$vhostdir${CEND}"
-[ "$rewrite_yn" == 'y' ] && echo "`printf "%-28s" "Rewrite rule:"`${CMSG}$web_install_dir/conf/$rewrite.conf${CEND}" 
+[ "$rewrite_yn" == 'y' ] && echo "`printf "%-28s" "Rewrite rule:"`${CMSG}$web_install_dir/conf/rewrite/$rewrite.conf${CEND}"
 [ "$nginx_ssl_yn" == 'y' ] && Print_ssl
 }
 
 Add_Vhost() {
-    if [ -e "$web_install_dir/sbin/nginx" -a ! -e "`ls $apache_install_dir/modules/libphp?.so 2>/dev/null`" ];then
+    if [ -e "$web_install_dir/sbin/nginx" -a ! -e "$apache_install_dir/conf/httpd.conf" ];then
         Choose_env
         Input_Add_domain
         Nginx_anti_hotlinking
@@ -674,7 +849,7 @@ Add_Vhost() {
             Nginx_log
             Create_nginx_php-fpm_hhvm_conf
         fi
-    elif [ ! -e "$web_install_dir/sbin/nginx" -a -e "`ls $apache_install_dir/modules/libphp?.so 2>/dev/null`" ];then
+    elif [ ! -e "$web_install_dir/sbin/nginx" -a -e "$apache_install_dir/conf/httpd.conf" ];then
         Choose_env
         Input_Add_domain
         Apache_log
@@ -709,10 +884,8 @@ Del_NGX_Vhost() {
         if [ -n "$Domain_List" ];then
             echo
             echo "Virtualhost list:"
-	    echo ${CMSG}$Domain_List${CEND}
-            while :
-            do
-                echo
+        echo ${CMSG}$Domain_List${CEND}
+            while :; do echo
                 read -p "Please input a domain you want to delete: " domain
                 if [ -z "`echo $domain | grep '.*\..*'`" ]; then
                     echo "${CWARNING}input error! ${CEND}"
@@ -721,10 +894,8 @@ Del_NGX_Vhost() {
                         Directory=`grep ^root $web_install_dir/conf/vhost/${domain}.conf | awk -F'[ ;]' '{print $2}'`
                         rm -rf $web_install_dir/conf/vhost/${domain}.conf
                         $web_install_dir/sbin/nginx -s reload
-                        while :
-                        do
-                            echo
-                            read -p "Do you want to delete Virtul Host directory? [y/n]: " Del_Vhost_wwwroot_yn 
+                        while :; do echo
+                            read -p "Do you want to delete Virtul Host directory? [y/n]: " Del_Vhost_wwwroot_yn
                             if [[ ! $Del_Vhost_wwwroot_yn =~ ^[y,n]$ ]];then
                                 echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
                             else
@@ -753,7 +924,7 @@ Del_NGX_Vhost() {
 Del_Apache_Vhost() {
     if [ -e "$apache_install_dir/conf/httpd.conf" ];then
         if [ -e "$web_install_dir/sbin/nginx" ];then
-            rm -rf $apache_install_dir/conf/vhost/${domain}.conf 
+            rm -rf $apache_install_dir/conf/vhost/${domain}.conf
             /etc/init.d/httpd restart
         else
             Domain_List=`ls $apache_install_dir/conf/vhost | grep -v '0.conf' | sed "s@.conf@@g"`
@@ -761,9 +932,7 @@ Del_Apache_Vhost() {
                 echo
                 echo "Virtualhost list:"
                 echo ${CMSG}$Domain_List${CEND}
-                while :
-                do
-                    echo
+                while :; do echo
                     read -p "Please input a domain you want to delete: " domain
                     if [ -z "`echo $domain | grep '.*\..*'`" ]; then
                         echo "${CWARNING}input error! ${CEND}"
@@ -772,9 +941,7 @@ Del_Apache_Vhost() {
                             Directory=`grep '^<Directory' $apache_install_dir/conf/vhost/${domain}.conf | awk -F'"' '{print $2}'`
                             rm -rf $apache_install_dir/conf/vhost/${domain}.conf
                             /etc/init.d/httpd restart
-                            while :
-                            do
-                                echo
+                            while :; do echo
                                 read -p "Do you want to delete Virtul Host directory? [y/n]: " Del_Vhost_wwwroot_yn
                                 if [[ ! $Del_Vhost_wwwroot_yn =~ ^[y,n]$ ]];then
                                     echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
@@ -806,8 +973,8 @@ Del_Apache_Vhost() {
 Del_Tomcat_Vhost() {
     if [ -e "$tomcat_install_dir/conf/server.xml" ];then
         if [ -e "$web_install_dir/sbin/nginx" ];then
-            if [ -n "`grep ${domain}-vhost $tomcat_install_dir/conf/server.xml`" ];then
-                sed -i /${domain}-vhost/d $tomcat_install_dir/conf/server.xml 
+            if [ -n "`grep vhost-${domain} $tomcat_install_dir/conf/server.xml`" ];then
+                sed -i /vhost-${domain}/d $tomcat_install_dir/conf/server.xml
                 rm -rf $tomcat_install_dir/conf/vhost/${domain}.xml
                 /etc/init.d/tomcat restart
             fi
@@ -817,20 +984,16 @@ Del_Tomcat_Vhost() {
                 echo
                 echo "Virtualhost list:"
                 echo ${CMSG}$Domain_List${CEND}
-                while :
-                do
-                    echo
+                while :; do echo
                     read -p "Please input a domain you want to delete: " domain
                     if [ -z "`echo $domain | grep '.*\..*'`" ]; then
                         echo "${CWARNING}input error! ${CEND}"
                     else
-                        if [ -n "`grep ${domain}-vhost $tomcat_install_dir/conf/server.xml`" ];then
-                            sed -i /${domain}-vhost/d $tomcat_install_dir/conf/server.xml
+                        if [ -n "`grep vhost-${domain} $tomcat_install_dir/conf/server.xml`" ];then
+                            sed -i /vhost-${domain}/d $tomcat_install_dir/conf/server.xml
                             rm -rf $tomcat_install_dir/conf/vhost/${domain}.xml
                             /etc/init.d/tomcat restart
-                            while :
-                            do
-                                echo
+                            while :; do echo
                                 read -p "Do you want to delete Virtul Host directory? [y/n]: " Del_Vhost_wwwroot_yn
                                 if [[ ! $Del_Vhost_wwwroot_yn =~ ^[y,n]$ ]];then
                                     echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
@@ -838,7 +1001,7 @@ Del_Tomcat_Vhost() {
                                     break
                                 fi
                             done
-    
+
                             if [ "$Del_Vhost_wwwroot_yn" == 'y' ];then
                                 echo "Press Ctrl+c to cancel or Press any key to continue..."
                                 char=`get_char`
@@ -851,7 +1014,7 @@ Del_Tomcat_Vhost() {
                         break
                     fi
                 done
-    
+
             else
                 echo "${CWARNING}Virtualhost was not exist! ${CEND}"
             fi
@@ -860,19 +1023,17 @@ Del_Tomcat_Vhost() {
 }
 
 if [ $# == 0 ];then
-    Add_Vhost 
+    Add_Vhost
 elif [ $# == 1 ];then
     case $1 in
     add)
         Add_Vhost
         ;;
-
     del)
         Del_NGX_Vhost
         Del_Apache_Vhost
         Del_Tomcat_Vhost
         ;;
-
     *)
         Usage
         ;;

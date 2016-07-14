@@ -5,25 +5,21 @@
 # Notes: OneinStack for CentOS/RadHat 5+ Debian 6+ and Ubuntu 12+
 #
 # Project home page:
-#       http://oneinstack.com
+#       https://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
-Install_Nginx()
-{
+Install_Nginx() {
 cd $oneinstack_dir/src
 src_url=http://mirrors.linuxeye.com/oneinstack/src/pcre-$pcre_version.tar.gz && Download_src
 src_url=http://nginx.org/download/nginx-$nginx_version.tar.gz && Download_src
-
-tar xzf pcre-$pcre_version.tar.gz
-cd pcre-$pcre_version
-./configure
-make && make install
-cd ..
+src_url=https://www.openssl.org/source/openssl-$openssl_version.tar.gz && Download_src
 
 id -u $run_user >/dev/null 2>&1
-[ $? -ne 0 ] && useradd -M -s /sbin/nologin $run_user 
+[ $? -ne 0 ] && useradd -M -s /sbin/nologin $run_user
 
+tar xzf pcre-$pcre_version.tar.gz
 tar xzf nginx-$nginx_version.tar.gz
+tar xzf openssl-$openssl_version.tar.gz
 cd nginx-$nginx_version
 # Modify Nginx version
 #sed -i 's@#define NGINX_VERSION.*$@#define NGINX_VERSION      "1.2"@' src/core/nginx.h
@@ -42,28 +38,24 @@ elif [ "$je_tc_malloc" == '2' ];then
 fi
 
 [ ! -d "$nginx_install_dir" ] && mkdir -p $nginx_install_dir
-./configure --prefix=$nginx_install_dir --user=$run_user --group=$run_user --with-http_stub_status_module --with-http_v2_module --with-http_ssl_module --with-ipv6 --with-http_gzip_static_module --with-http_realip_module --with-http_flv_module $malloc_module
-make && make install
+./configure --prefix=$nginx_install_dir --user=$run_user --group=$run_user --with-http_stub_status_module --with-http_v2_module --with-http_ssl_module --with-ipv6 --with-http_gzip_static_module --with-http_realip_module --with-http_flv_module --with-openssl=../openssl-$openssl_version --with-pcre=../pcre-$pcre_version --with-pcre-jit $malloc_module
+make -j ${THREAD} && make install
 if [ -e "$nginx_install_dir/conf/nginx.conf" ];then
     cd ..
     rm -rf nginx-$nginx_version
-    echo "${CSUCCESS}Nginx install successfully! ${CEND}"
+    echo "${CSUCCESS}Nginx installed successfully! ${CEND}"
 else
     rm -rf $nginx_install_dir
-    echo "${CFAILURE}Nginx install failed, Please Contact the author! ${CEND}" 
+    echo "${CFAILURE}Nginx install failed, Please Contact the author! ${CEND}"
     kill -9 $$
 fi
 
-[ -z "`grep ^'export PATH=' /etc/profile`" ] && echo "export PATH=$nginx_install_dir/sbin:\$PATH" >> /etc/profile 
+[ -z "`grep ^'export PATH=' /etc/profile`" ] && echo "export PATH=$nginx_install_dir/sbin:\$PATH" >> /etc/profile
 [ -n "`grep ^'export PATH=' /etc/profile`" -a -z "`grep $nginx_install_dir /etc/profile`" ] && sed -i "s@^export PATH=\(.*\)@export PATH=$nginx_install_dir/sbin:\1@" /etc/profile
 . /etc/profile
 
-OS_CentOS='/bin/cp ../init.d/Nginx-init-CentOS /etc/init.d/nginx \n
-chkconfig --add nginx \n
-chkconfig nginx on'
-OS_Debian_Ubuntu='/bin/cp ../init.d/Nginx-init-Ubuntu /etc/init.d/nginx \n
-update-rc.d nginx defaults'
-OS_command
+[ "$OS" == 'CentOS' ] && { /bin/cp ../init.d/Nginx-init-CentOS /etc/init.d/nginx; chkconfig --add nginx; chkconfig nginx on; }
+[[ $OS =~ ^Ubuntu$|^Debian$ ]] && { /bin/cp ../init.d/Nginx-init-Ubuntu /etc/init.d/nginx; update-rc.d nginx defaults; }
 cd ..
 
 sed -i "s@/usr/local/nginx@$nginx_install_dir@g" /etc/init.d/nginx
@@ -96,7 +88,7 @@ EOF
 sed -i "s@/data/wwwroot/default@$wwwroot_dir/default@" $nginx_install_dir/conf/nginx.conf
 sed -i "s@/data/wwwlogs@$wwwlogs_dir@g" $nginx_install_dir/conf/nginx.conf
 sed -i "s@^user www www@user $run_user $run_user@" $nginx_install_dir/conf/nginx.conf
-[ "$je_tc_malloc" == '2' ] && sed -i 's@^pid\(.*\)@pid\1\ngoogle_perftools_profiles /tmp/tcmalloc;@' $nginx_install_dir/conf/nginx.conf 
+[ "$je_tc_malloc" == '2' ] && sed -i 's@^pid\(.*\)@pid\1\ngoogle_perftools_profiles /tmp/tcmalloc;@' $nginx_install_dir/conf/nginx.conf
 
 # logrotate nginx log
 cat > /etc/logrotate.d/nginx << EOF

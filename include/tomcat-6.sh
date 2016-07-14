@@ -8,19 +8,19 @@
 #       https://oneinstack.com
 #       https://github.com/lj2007331/oneinstack
 
-Install_tomcat-8() {
+Install_tomcat-6() {
 cd $oneinstack_dir/src
 . /etc/profile
 
-src_url=http://mirrors.linuxeye.com/apache/tomcat/v$tomcat_8_version/apache-tomcat-$tomcat_8_version.tar.gz && Download_src
-src_url=http://mirrors.linuxeye.com/apache/tomcat/v$tomcat_8_version/catalina-jmx-remote.jar && Download_src
+src_url=http://mirrors.linuxeye.com/apache/tomcat/v$tomcat_6_version/apache-tomcat-$tomcat_6_version.tar.gz && Download_src
+src_url=http://mirrors.linuxeye.com/apache/tomcat/v$tomcat_6_version/catalina-jmx-remote.jar && Download_src
 
 id -u $run_user >/dev/null 2>&1
 [ $? -ne 0 ] && useradd -M -s /bin/bash $run_user || { [ -z "`grep ^$run_user /etc/passwd | grep '/bin/bash'`" ] && usermod -s /bin/bash $run_user; }
 
-tar xzf apache-tomcat-$tomcat_8_version.tar.gz
+tar xzf apache-tomcat-$tomcat_6_version.tar.gz
 [ ! -d "$tomcat_install_dir" ] && mkdir -p $tomcat_install_dir
-/bin/cp -R apache-tomcat-$tomcat_8_version/* $tomcat_install_dir
+/bin/cp -R apache-tomcat-$tomcat_6_version/* $tomcat_install_dir
 rm -rf $tomcat_install_dir/webapps/{docs,examples,host-manager,manager,ROOT/*}
 
 if [ -e "$tomcat_install_dir/conf/server.xml" ];then
@@ -30,7 +30,7 @@ if [ -e "$tomcat_install_dir/conf/server.xml" ];then
     cd $tomcat_install_dir/lib/catalina
     jar xf ../catalina.jar
     sed -i 's@^server.info=.*@server.info=Tomcat@' org/apache/catalina/util/ServerInfo.properties
-    sed -i 's@^server.number=.*@server.number=8@' org/apache/catalina/util/ServerInfo.properties
+    sed -i 's@^server.number=.*@server.number=6@' org/apache/catalina/util/ServerInfo.properties
     sed -i "s@^server.built=.*@server.built=`date`@" org/apache/catalina/util/ServerInfo.properties
     jar cf ../catalina.jar ./*
     cd ../../bin
@@ -58,7 +58,7 @@ EOF
         cd $oneinstack_dir/src
         /bin/cp ../config/server.xml $tomcat_install_dir/conf
         sed -i "s@/usr/local/tomcat@$tomcat_install_dir@g" $tomcat_install_dir/conf/server.xml
-
+        sed -i /ThreadLocalLeakPreventionListener/d $tomcat_install_dir/conf/server.xml
         if [ ! -e "$nginx_install_dir/sbin/nginx" -a ! -e "$tengine_install_dir/sbin/nginx" -a ! -e "$apache_install_dir/conf/httpd.conf" ];then
             if [ "$OS" == 'CentOS' ];then
                 if [ -z "`grep -w '8080' /etc/sysconfig/iptables`" ];then
@@ -109,7 +109,7 @@ EOF
         sed -i "s@JAVA_HOME=.*@JAVA_HOME=$JAVA_HOME@" /etc/init.d/tomcat
         sed -i "s@^CATALINA_HOME=.*@CATALINA_HOME=$tomcat_install_dir@" /etc/init.d/tomcat
         sed -i "s@^TOMCAT_USER=.*@TOMCAT_USER=$run_user@" /etc/init.d/tomcat
-        [ "$OS" == 'CentOS' ] && { chkconfig --add tomcat;chkconfig tomcat on; }
+        [ "$OS" == 'CentOS' ] && { chkconfig --add tomcat; chkconfig tomcat on; }
         [[ $OS =~ ^Ubuntu$|^Debian$ ]] && update-rc.d tomcat defaults
         echo "${CSUCCESS}Tomcat installed successfully! ${CEND}"
     fi
