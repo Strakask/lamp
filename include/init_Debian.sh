@@ -10,7 +10,7 @@
 
 for Package in apache2 apache2-doc apache2-utils apache2.2-common apache2.2-bin apache2-mpm-prefork apache2-doc apache2-mpm-worker mysql-client mysql-server mysql-common libmysqlclient18 php5 php5-common php5-cgi php5-mysql php5-curl php5-gd libmysql* mysql-*
 do
-    apt-get -y remove --purge $Package
+  apt-get -y remove --purge $Package
 done
 dpkg -l | grep ^rc | awk '{print $2}' | xargs dpkg -P
 
@@ -23,15 +23,31 @@ apt-get -y upgrade -o Dir::Etc::SourceList=/tmp/security.sources.list
 # Install needed packages
 for Package in gcc g++ make cmake autoconf libjpeg8 libjpeg8-dev libjpeg-dev libpng12-0 libpng12-dev libpng3 libfreetype6 libfreetype6-dev libxml2 libxml2-dev zlib1g zlib1g-dev libc6 libc6-dev libglib2.0-0 libglib2.0-dev bzip2 libzip-dev libbz2-1.0 libncurses5 libncurses5-dev libaio1 libaio-dev libreadline-dev curl libcurl3 libcurl4-openssl-dev libcurl4-gnutls-dev e2fsprogs libkrb5-3 libkrb5-dev libltdl-dev libidn11 libidn11-dev openssl libssl-dev libtool libevent-dev bison re2c libsasl2-dev libxslt1-dev libicu-dev locales libcloog-ppl0 patch vim zip unzip tmux htop bc expect rsync git lsof lrzsz cron logrotate ntpdate psmisc
 do
-    apt-get -y install $Package
+  apt-get -y install $Package
 done
 
-# PS1
-[ -z "`grep ^PS1 ~/.bashrc`" ] && echo "PS1='\${debian_chroot:+(\$debian_chroot)}\\[\\e[1;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w\\[\\033[00m\\]\\$ '" >> ~/.bashrc
+# Custom profile
+cat > /etc/profile.d/oneinstack.sh << EOF
+HISTSIZE=10000
+PS1='\${debian_chroot:+(\$debian_chroot)}\\[\\e[1;32m\\]\\u@\\h\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w\\[\\033[00m\\]\\$ '
+HISTTIMEFORMAT="%F %T \`whoami\` "
 
-# history size
-[ -z "`grep ^HISTSIZE ~/.bashrc`" ] && echo 'HISTSIZE=100' >> ~/.bashrc
-[ -z "`grep history-timestamp ~/.bashrc`" ] && echo "export PROMPT_COMMAND='{ msg=\$(history 1 | { read x y; echo \$y; });user=\$(whoami); echo \$(date \"+%Y-%m-%d %H:%M:%S\"):\$user:\`pwd\`/:\$msg ---- \$(who am i); } >> /tmp/\`hostname\`.\`whoami\`.history-timestamp'" >> ~/.bashrc
+alias l='ls -AFhlt --color=auto'
+alias lh='l | head'
+alias ll='ls -l --color=auto'
+alias ls='ls --color=auto'
+alias vi=vim
+
+GREP_OPTIONS="--color=auto"
+alias grep='grep --color'
+alias egrep='egrep --color'
+alias fgrep='fgrep --color'
+EOF
+
+sed -i 's@^"syntax on@syntax on@' /etc/vim/vimrc
+
+# history
+[ -z "`grep history-timestamp ~/.bashrc`" ] && echo "PROMPT_COMMAND='{ msg=\$(history 1 | { read x y; echo \$y; });user=\$(whoami); echo \$(date \"+%Y-%m-%d %H:%M:%S\"):\$user:\`pwd\`/:\$msg ---- \$(who am i); } >> /tmp/\`hostname\`.\`whoami\`.history-timestamp'" >> ~/.bashrc
 
 # /etc/security/limits.conf
 [ -e /etc/security/limits.d/*nproc.conf ] && rename nproc.conf nproc.conf_bk /etc/security/limits.d/*nproc.conf
@@ -62,12 +78,6 @@ ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 #nameserver 8.8.8.8
 #EOF
 
-# alias vi
-[ -z "`grep 'alias vi=' ~/.bashrc`" ] && sed -i "s@^alias l=\(.*\)@alias l=\1\nalias vi='vim'@" ~/.bashrc
-sed -i 's@^"syntax on@syntax on@' /etc/vim/vimrc
-sed -i 's@^# export LS_OPTIONS@export LS_OPTIONS@' ~/.bashrc
-sed -i 's@^# alias@alias@g' ~/.bashrc
-
 # /etc/sysctl.conf
 [ -z "`grep 'fs.file-max' /etc/sysctl.conf`" ] && cat >> /etc/sysctl.conf << EOF
 fs.file-max=65535
@@ -96,18 +106,17 @@ init q
 # Update time
 ntpdate pool.ntp.org
 [ ! -e "/var/spool/cron/crontabs/root" -o -z "`grep ntpdate /var/spool/cron/crontabs/root 2>/dev/null`" ] && { echo "*/20 * * * * `which ntpdate` pool.ntp.org > /dev/null 2>&1" >> /var/spool/cron/crontabs/root;chmod 600 /var/spool/cron/crontabs/root; }
-service cron restart
 
 # iptables
-if [ -e '/etc/iptables.up.rules' ] && [ -n "`grep ':INPUT DROP' /etc/iptables.up.rules`" -a -n "`grep 'NEW -m tcp --dport 22 -j ACCEPT' /etc/iptables.up.rules`" -a -n "`grep 'NEW -m tcp --dport 80 -j ACCEPT' /etc/iptables.up.rules`" ];then
-    IPTABLES_STATUS=yes
+if [ -e '/etc/iptables.up.rules' ] && [ -n "`grep '^:INPUT DROP' /etc/iptables.up.rules`" -a -n "`grep 'NEW -m tcp --dport 22 -j ACCEPT' /etc/iptables.up.rules`" -a -n "`grep 'NEW -m tcp --dport 80 -j ACCEPT' /etc/iptables.up.rules`" ]; then
+  IPTABLES_STATUS=yes
 else
-    IPTABLES_STATUS=no
+  IPTABLES_STATUS=no
 fi
 
-if [ "$IPTABLES_STATUS" == 'no' ];then
-    [ -e '/etc/iptables.up.rules' ] && /bin/mv /etc/iptables.up.rules{,_bk}
-    cat > /etc/iptables.up.rules << EOF
+if [ "$IPTABLES_STATUS" == 'no' ]; then
+  [ -e '/etc/iptables.up.rules' ] && /bin/mv /etc/iptables.up.rules{,_bk}
+  cat > /etc/iptables.up.rules << EOF
 # Firewall configuration written by system-config-securitylevel
 # Manual customization of this file is not recommended.
 *filter
@@ -120,8 +129,8 @@ if [ "$IPTABLES_STATUS" == 'no' ];then
 -A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
 -A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT
 -A INPUT -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT
--A INPUT -p icmp -m limit --limit 100/sec --limit-burst 100 -j ACCEPT
--A INPUT -p icmp -m limit --limit 1/s --limit-burst 10 -j ACCEPT
+-A INPUT -p icmp -m limit --limit 1/sec --limit-burst 10 -j ACCEPT
+-A INPUT -f -m limit --limit 100/sec --limit-burst 100 -j ACCEPT
 -A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j syn-flood
 -A INPUT -j REJECT --reject-with icmp-host-prohibited
 -A syn-flood -p tcp -m limit --limit 3/sec --limit-burst 6 -j RETURN
@@ -140,4 +149,5 @@ EOF
 chmod +x /etc/network/if-pre-up.d/iptables
 service ssh restart
 
+. /etc/profile
 . ~/.bashrc
