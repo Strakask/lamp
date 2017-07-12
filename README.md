@@ -132,5 +132,5 @@ service memcached {start|stop|status|restart|reload}
 
 ## Installation
 
-For feedback, questions, and to follow the progress of the project (Chinese): <br />
+For feedback, questions, and to follow the progress of the project (Tech Blog): <br />
 [Install LAMP Stack Ubuntu by Brian Mackey](http://brianmackey.net/Blog/install-lamp-stack-ubuntu-17-04/)<br />
